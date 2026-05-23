@@ -93,6 +93,6 @@ TBD
 
 ## Autori
 
-- **Igor Naješel**
+- **Igor Najšel**
 - **Matúš Matuška**
 - **Tomáš Ondrišák**
