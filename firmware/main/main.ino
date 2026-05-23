@@ -17,6 +17,17 @@ int pumpPWM = 128;
 int heaterPWM = 128;
 int peltierPWM = 128;
 
+// PID parametre
+float Kp       = 100.0;
+float Ki       =   5.5;
+float Kd       =   0.0;
+float T        =   1.0;
+float setpoint =  22.0;
+
+float previous_error = 0;
+float integral       = 0;
+unsigned long lastTime = 0;
+
 void setup() {
   Serial.begin(9600);
   waterSensors.begin();
@@ -30,6 +41,28 @@ void loop() {
 
   printTemperatures();
   delay(1000);
+}
+
+float PID_Controller(float setpoint, float process_value,
+                     float Kp, float Ki, float Kd, float T,
+                     float outMin, float outMax) {
+
+  float error  = setpoint - process_value;
+  float P_term = Kp * error;
+
+  integral += error * T;
+
+  // Anti-windup clamping
+  if (Ki != 0.0) {
+    integral = constrain(integral, outMin / Ki, outMax / Ki);
+  }
+
+  float I_term = Ki * integral;
+  float D_term = Kd * (error - previous_error) / T;
+
+  previous_error = error;
+
+  return constrain(P_term + I_term + D_term, outMin, outMax);
 }
 
 void printTemperatures() {
