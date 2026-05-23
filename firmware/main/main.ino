@@ -1,8 +1,8 @@
-// Knižnice
+// Libraries
 #include <OneWire.h>
 #include <DallasTemperature.h>
 
-// Zapojenie
+// Pin definitions
 #define ONE_WIRE_BUS 2      // Pin pre senzor teploty DS18B20
 #define PELTIER_PWM_PIN 10  // PWM výstup pre Peltier
 #define PUMP_PWM_PIN 11     // PWM výstup pre čerpadlo
@@ -47,6 +47,7 @@ void loop() {
     lastTime = millis();
 
     waterSensors.requestTemperatures();
+    // Set index according to your wiring: 0 for input (cold side), 1 for output (warm side)
     float tempInput  = waterSensors.getTempCByIndex(0);
     float tempOutput = waterSensors.getTempCByIndex(1);
 
@@ -64,6 +65,7 @@ void loop() {
   }
 }
 
+// PID controller function
 float PID_Controller(float setpoint, float process_value,
                      float Kp, float Ki, float Kd, float T,
                      float outMin, float outMax) {
@@ -86,6 +88,7 @@ float PID_Controller(float setpoint, float process_value,
   return constrain(P_term + I_term + D_term, outMin, outMax);
 }
 
+// Publishing JSON with current temperatures and settings to Serial
 void publishJson(float tempInput, float tempOutput) {
   Serial.print("{\"cold\":");
   if (tempInput != DEVICE_DISCONNECTED_C) Serial.print(tempInput, TEMP_DECIMAL_PRECISION);
@@ -100,4 +103,32 @@ void publishJson(float tempInput, float tempOutput) {
   Serial.print(",\"pump_pwm\":"); Serial.print(pumpPWM);
   Serial.print(",\"heater_pwm\":"); Serial.print(heaterPWM);
   Serial.println("}");
+}
+
+// Handles incoming settings as JSON, one key-value per line.
+// Example: {"pumpPWM":200} or {"Kp":120.0}
+void handleSerialCommands() {
+  if (!Serial.available()) return;
+
+  String line = Serial.readStringUntil('\n');
+  line.trim();
+  if (line.length() == 0) return;
+
+  int colonPos = line.indexOf(':');
+  if (colonPos < 0) return;
+
+  String key = line.substring(line.indexOf('"') + 1, line.lastIndexOf('"', colonPos));
+  String val = line.substring(colonPos + 1);
+  val.replace("}", "");
+  val.trim();
+
+  float value = val.toFloat();
+
+  if      (key == "pumpPWM")    pumpPWM   = constrain((int)value, 0, 255);
+  else if (key == "heaterPWM")  heaterPWM = constrain((int)value, 0, 255);
+  else if (key == "setpoint")   setpoint  = value;
+  else if (key == "Kp")         Kp = value;
+  else if (key == "Ki")       { Ki = value; integral = 0; }
+  else if (key == "Kd")         Kd = value;
+  else if (key == "reset")    { integral = 0; previous_error = 0; }
 }
