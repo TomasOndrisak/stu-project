@@ -62,3 +62,37 @@ Voda má vysokú tepelnú zotrvačnosť — teplota sa nemení rýchlejšie ako 
 | `{"Ki":3.5}` | float | Integračné zosilnenie |
 | `{"Kd":0.0}` | float | Derivačné zosilnenie |
 | `{"reset":1}` | — | Reset PID integrálu |
+
+## Inštalácia
+
+### 1. Arduino firmware
+
+**Požiadavky:**
+- Arduino IDE 2.x +
+- Knižnice (Library Manager):
+  - `OneWire` by Paul Stoffregen
+  - `DallasTemperature` by Miles Burton
+
+**Postup:**
+1. Otvorte `firmware/main/main.ino` v Arduino IDE
+2. Výber dosky: *Tools → Board → Arduino Uno*
+3. Výber COM portu
+4. Overenie a Nahratie: *Sketch → Verify* → *Sketch → Upload* 
+
+### 2. Raspberry Pi
+
+TBD
+
+### 3. Frontend
+
+TBD
+
+## Prístup na dashboard
+
+TBD
+
+## Autori
+
+- **Igor Naješel**
+- **Matúš Matuška**
+- **Tomáš Ondrišák**
