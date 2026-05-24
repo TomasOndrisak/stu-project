@@ -1,4 +1,6 @@
 const REFRESH_INTERVAL_MS = 1000;
+const CHART_HOURS = 1; // 1 hour of history
+
 
 const elements = {
     status: document.getElementById("status"),
@@ -12,7 +14,7 @@ const elements = {
 };
 
 async function fetchCurrent() {
-    try {
+     try {
         const response = await fetch("/api/current");
 
         if (!response.ok) {
@@ -40,7 +42,43 @@ function updateCards(data) {
     elements.resistance.textContent = data.resistance ?? "—";
 }
 
-const CHART_HOURS = 24; // 24 hours of history
+async function fetchHistory() {
+    try {
+        const response = await fetch(`/api/history?hours=${CHART_HOURS}`);
+
+        if (!response.ok) {
+            console.warn("History fetch failed:", response.status);
+            return;
+        }
+
+        const data = await response.json();
+        updateCharts(data);
+
+    } catch (error) {
+        console.error("History fetch error:", error);
+    }
+}
+
+function updateCharts(measurements) {
+    const points = measurements.map(m => ({
+        cold:        { x: m.timestamp, y: m.cold },
+        warm:        { x: m.timestamp, y: m.warm },
+        setpoint:    { x: m.timestamp, y: m.setpoint },
+        peltier:     { x: m.timestamp, y: m.peltier_pwm },
+        pump:        { x: m.timestamp, y: m.pump_pwm },
+        heater:      { x: m.timestamp, y: m.heater_pwm },
+    }));
+
+    chartTemperatures.data.datasets[0].data = points.map(p => p.cold);
+    chartTemperatures.data.datasets[1].data = points.map(p => p.warm);
+    chartTemperatures.data.datasets[2].data = points.map(p => p.setpoint);
+    chartTemperatures.update("none");
+
+    chartActuators.data.datasets[0].data = points.map(p => p.peltier);
+    chartActuators.data.datasets[1].data = points.map(p => p.pump);
+    chartActuators.data.datasets[2].data = points.map(p => p.heater);
+    chartActuators.update("none");
+}
 
 const chartTemperatures = new Chart(
     document.getElementById("chart-temperatures"),
@@ -136,4 +174,7 @@ const chartActuators = new Chart(
 
 
 fetchCurrent();
-setInterval(fetchCurrent, REFRESH_INTERVAL_MS);       
+setInterval(fetchCurrent, REFRESH_INTERVAL_MS);
+
+fetchHistory();
+setInterval(fetchHistory, 5000);
