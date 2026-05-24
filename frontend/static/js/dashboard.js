@@ -14,7 +14,7 @@ const elements = {
 };
 
 async function fetchCurrent() {
-     try {
+    try {
         const response = await fetch("/api/current");
 
         if (!response.ok) {
@@ -61,12 +61,12 @@ async function fetchHistory() {
 
 function updateCharts(measurements) {
     const points = measurements.map(m => ({
-        cold:        { x: m.timestamp, y: m.cold },
-        warm:        { x: m.timestamp, y: m.warm },
-        setpoint:    { x: m.timestamp, y: m.setpoint },
-        peltier:     { x: m.timestamp, y: m.peltier_pwm },
-        pump:        { x: m.timestamp, y: m.pump_pwm },
-        heater:      { x: m.timestamp, y: m.heater_pwm },
+        cold: { x: m.timestamp, y: m.cold },
+        warm: { x: m.timestamp, y: m.warm },
+        setpoint: { x: m.timestamp, y: m.setpoint },
+        peltier: { x: m.timestamp, y: m.peltier_pwm },
+        pump: { x: m.timestamp, y: m.pump_pwm },
+        heater: { x: m.timestamp, y: m.heater_pwm },
     }));
 
     chartTemperatures.data.datasets[0].data = points.map(p => p.cold);
@@ -83,7 +83,11 @@ function updateCharts(measurements) {
 // Controls
 const ctrlSetpoint = document.getElementById("ctrl-setpoint");
 const ctrlSetpointValue = document.getElementById("ctrl-setpoint-value");
+const ctrlPump = document.getElementById("ctrl-pump");
+const ctrlPumpValue = document.getElementById("ctrl-pump-value");
+const ctrlPumpPot = document.getElementById("ctrl-pump-pot");
 
+// Setpoint input event
 ctrlSetpoint.addEventListener("input", () => {
     ctrlSetpointValue.textContent = parseFloat(ctrlSetpoint.value).toFixed(1);
 });
@@ -92,6 +96,34 @@ ctrlSetpoint.addEventListener("input", () => {
 ctrlSetpoint.addEventListener("change", async () => {
     const value = parseFloat(ctrlSetpoint.value);
     await sendCommand({ setpoint: value });
+});
+
+// Pump input event - updates displayed value
+ctrlPump.addEventListener("input", () => {
+    ctrlPumpValue.textContent = ctrlPump.value;
+});
+
+// On change event - sends command to backend
+ctrlPump.addEventListener("change", async () => {
+    // If potentiometer mode is enabled, ignore manual input
+    if (ctrlPumpPot.checked) return;
+
+    const value = parseInt(ctrlPump.value);
+    await sendCommand({ pumpPWM: value });
+});
+
+// On change event - sends command to backend
+ctrlPumpPot.addEventListener("change", async () => {
+    if (ctrlPumpPot.checked) {
+        // Activate potentiometer mode — disable manual slider and send -1 to indicate auto mode
+        ctrlPump.disabled = true;
+        await sendCommand({ pumpPWM: -1 });
+    } else {
+        // Deactivate — send current slider value
+        ctrlPump.disabled = false;
+        const value = parseInt(ctrlPump.value);
+        await sendCommand({ pumpPWM: value });
+    }
 });
 
 // Command API handler
