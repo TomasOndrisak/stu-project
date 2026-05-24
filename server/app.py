@@ -23,9 +23,17 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
-# Path to the frontend templates.
-TEMPLATES_DIR = Path(__file__).parent.parent / "frontend" / "templates"
-app = Flask(__name__, template_folder=str(TEMPLATES_DIR))
+# Flask app setup
+FRONTEND_DIR  = Path(__file__).parent.parent / "frontend"
+TEMPLATES_DIR = FRONTEND_DIR / "templates"
+STATIC_DIR    = FRONTEND_DIR / "static"
+
+app = Flask(
+    __name__,
+    template_folder=str(TEMPLATES_DIR),
+    static_folder=str(STATIC_DIR),
+    static_url_path="/static",
+)
 
 # MQTT instnace
 mqtt_client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
