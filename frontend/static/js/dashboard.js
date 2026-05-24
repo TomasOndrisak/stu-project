@@ -80,6 +80,42 @@ function updateCharts(measurements) {
     chartActuators.update("none");
 }
 
+// Controls
+const ctrlSetpoint = document.getElementById("ctrl-setpoint");
+const ctrlSetpointValue = document.getElementById("ctrl-setpoint-value");
+
+ctrlSetpoint.addEventListener("input", () => {
+    ctrlSetpointValue.textContent = parseFloat(ctrlSetpoint.value).toFixed(1);
+});
+
+// Setpoint on change event
+ctrlSetpoint.addEventListener("change", async () => {
+    const value = parseFloat(ctrlSetpoint.value);
+    await sendCommand({ setpoint: value });
+});
+
+// Command API handler
+async function sendCommand(payload) {
+    try {
+        const response = await fetch("/api/command", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+            console.error("Command failed:", response.status);
+            return;
+        }
+
+        console.log("Command sent:", payload);
+
+    } catch (error) {
+        console.error("Command error:", error);
+    }
+}
+
+
 const chartTemperatures = new Chart(
     document.getElementById("chart-temperatures"),
     {
