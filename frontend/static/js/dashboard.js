@@ -21,19 +21,49 @@ const elements = {
 async function fetchCurrent() {
     try {
         const response = await fetch("/api/current");
-
+        
         if (!response.ok) {
             elements.status.textContent = "● No data";
+            updateArduinoStatus(null);
             return;
         }
-
+        
         const data = await response.json();
         updateCards(data);
-        elements.status.textContent = "● Connected";
+        elements.status.textContent = "● Server Connected";
+
+        updateArduinoStatus(data.timestamp);
 
     } catch (error) {
         console.error("Fetch error:", error);
-        elements.status.textContent = "● Disconnected";
+        elements.status.textContent = "● Error fetching data";
+        updateArduinoStatus(null);
+    }
+}
+
+function updateArduinoStatus(timestamp) {
+    const arduinoStatusBadge = document.getElementById('arduino-status');
+
+    if (!timestamp) {
+        arduinoStatusBadge.textContent = "● Arduino Unknown";
+        arduinoStatusBadge.classList.remove('bg-success', 'bg-danger');
+        arduinoStatusBadge.classList.add('bg-secondary');
+        return;
+    }
+
+  
+    const lastUpdate = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now - lastUpdate;
+
+    if (diffMs > 3000) {
+        arduinoStatusBadge.textContent = "● Arduino Disconnected";
+        arduinoStatusBadge.classList.remove('bg-neutral', 'bg-success', 'bg-secondary');
+        arduinoStatusBadge.classList.add('bg-danger');
+    } else {
+        arduinoStatusBadge.textContent = "● Arduino Connected";
+        arduinoStatusBadge.classList.remove('bg-neutral', 'bg-danger', 'bg-secondary');
+        arduinoStatusBadge.classList.add('bg-success');
     }
 }
 
