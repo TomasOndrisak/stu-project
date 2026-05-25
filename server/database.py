@@ -25,6 +25,10 @@ def init_db():
                 cold          REAL,
                 warm          REAL,
                 setpoint      REAL,
+                error         REAL,
+                p_term        REAL,
+                i_term        REAL,
+                d_term        REAL,
                 peltier_pwm   INTEGER,
                 pump_pwm      INTEGER,
                 heater_pwm    INTEGER,
@@ -39,19 +43,23 @@ def insert_measurement(data: dict):
     with get_connection() as conn:
         conn.execute("""
             INSERT INTO measurements
-                (cold, warm, setpoint, peltier_pwm, pump_pwm, heater_pwm, resistance, pump_from_pot)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                (cold, warm, setpoint, error, p_term, i_term, d_term,
+                 peltier_pwm, pump_pwm, heater_pwm, resistance, pump_from_pot)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             data.get("cold"),
             data.get("warm"),
             data.get("setpoint"),
+            data.get("error"),
+            data.get("P_term"),
+            data.get("I_term"),
+            data.get("D_term"),
             data.get("peltier_pwm"),
             data.get("pump_pwm"),
             data.get("heater_pwm"),
             data.get("resistance"),
             1 if data.get("pump_from_pot") else 0,
         ))
-
 # Get the latest measurement from the DB. Returns a dict or None if DB is empty.
 def get_latest():
     with get_connection() as conn:

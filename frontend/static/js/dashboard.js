@@ -11,6 +11,11 @@ const elements = {
     pump: document.getElementById("val-pump"),
     heater: document.getElementById("val-heater"),
     resistance: document.getElementById("val-resistance"),
+    error: document.getElementById("val-error"),
+    pTerm: document.getElementById("val-p-term"),
+    iTerm: document.getElementById("val-i-term"),
+    dTerm: document.getElementById("val-d-term"),
+
 };
 
 async function fetchCurrent() {
@@ -40,6 +45,10 @@ function updateCards(data) {
     elements.pump.textContent = data.pump_pwm ?? "—";
     elements.heater.textContent = data.heater_pwm ?? "—";
     elements.resistance.textContent = data.resistance ?? "—";
+    elements.error.textContent = data.error ?? "—";
+    elements.pTerm.textContent = data.p_term ?? "—";
+    elements.iTerm.textContent = data.i_term ?? "—";
+    elements.dTerm.textContent = data.d_term ?? "—";
 }
 
 async function fetchHistory() {
@@ -64,9 +73,7 @@ function updateCharts(measurements) {
         cold: { x: m.timestamp, y: m.cold },
         warm: { x: m.timestamp, y: m.warm },
         setpoint: { x: m.timestamp, y: m.setpoint },
-        peltier: { x: m.timestamp, y: m.peltier_pwm },
-        pump: { x: m.timestamp, y: m.pump_pwm },
-        heater: { x: m.timestamp, y: m.heater_pwm },
+        error: { x: m.timestamp, y: m.error },
     }));
 
     chartTemperatures.data.datasets[0].data = points.map(p => p.cold);
@@ -74,10 +81,8 @@ function updateCharts(measurements) {
     chartTemperatures.data.datasets[2].data = points.map(p => p.setpoint);
     chartTemperatures.update("none");
 
-    chartActuators.data.datasets[0].data = points.map(p => p.peltier);
-    chartActuators.data.datasets[1].data = points.map(p => p.pump);
-    chartActuators.data.datasets[2].data = points.map(p => p.heater);
-    chartActuators.update("none");
+    chartError.data.datasets[0].data = points.map(p => p.error);
+    chartError.update("none");
 }
 
 // Controls
@@ -232,32 +237,19 @@ const chartTemperatures = new Chart(
     }
 );
 
-const chartActuators = new Chart(
-    document.getElementById("chart-actuators"),
+const chartError = new Chart(
+    document.getElementById("chart-error"),
     {
         type: "line",
         data: {
             datasets: [
                 {
-                    label: "Peltier",
-                    borderColor: "#6610f2",
-                    backgroundColor: "rgba(102, 16, 242, 0.1)",
+                    label: "Error (w - y)",
+                    borderColor: "#ffc107",
+                    backgroundColor: "rgba(255, 193, 7, 0.1)",
                     data: [],
                     tension: 0.3,
-                },
-                {
-                    label: "Pump",
-                    borderColor: "#fd7e14",
-                    backgroundColor: "rgba(253, 126, 20, 0.1)",
-                    data: [],
-                    tension: 0.3,
-                },
-                {
-                    label: "Heater",
-                    borderColor: "#d63384",
-                    backgroundColor: "rgba(214, 51, 132, 0.1)",
-                    data: [],
-                    tension: 0.3,
+                    fill: true,
                 },
             ],
         },
@@ -270,9 +262,29 @@ const chartActuators = new Chart(
                     time: { unit: "minute" },
                 },
                 y: {
-                    title: { display: true, text: "PWM (0-255)" },
-                    min: 0,
-                    max: 255,
+                    title: { display: true, text: "Error (°C)" },
+                },
+            },
+            plugins: {
+                annotation: {
+                    annotations: {
+                        zeroLine: {
+                            type: "line",
+                            yMin: 0,
+                            yMax: 0,
+                            borderColor: "#198754",
+                            borderWidth: 2,
+                            borderDash: [6, 6],
+                            label: {
+                                content: "Ideal (e = 0)",
+                                display: true,
+                                position: "end",
+                                backgroundColor: "rgba(25, 135, 84, 0.8)",
+                                color: "white",
+                                font: { size: 11 },
+                            },
+                        },
+                    },
                 },
             },
         },

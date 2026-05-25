@@ -28,18 +28,19 @@
                 </div>
             </div>
             <div class="col-12 col-lg-6">
-                <h2 class="h6 mb-2">PID akčné členy</h2>
+                <h2 class="h6 mb-2">Regulačná odchýlka</h2>
                 <div class="card">
                     <div class="card-body" style="height: 250px;">
-                        <canvas id="chart-actuators"></canvas>
+                        <canvas id="chart-error"></canvas>
                     </div>
                 </div>
             </div>
         </div>
 
         <h2 class="h5 mb-3 mt-4">Aktuálne hodnoty</h2>
+
         <div class="row g-3">
-            <div class="col-6 col-md-4 col-lg">
+            <div class="col-6 col-md-3">
                 <div class="card text-center">
                     <div class="card-body">
                         <h6 class="card-subtitle text-muted">Cold</h6>
@@ -47,7 +48,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-6 col-md-4 col-lg">
+            <div class="col-6 col-md-3">
                 <div class="card text-center">
                     <div class="card-body">
                         <h6 class="card-subtitle text-muted">Warm</h6>
@@ -55,7 +56,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-6 col-md-4 col-lg">
+            <div class="col-6 col-md-3">
                 <div class="card text-center">
                     <div class="card-body">
                         <h6 class="card-subtitle text-muted">Setpoint</h6>
@@ -63,7 +64,18 @@
                     </div>
                 </div>
             </div>
-            <div class="col-6 col-md-4 col-lg">
+            <div class="col-6 col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h6 class="card-subtitle text-muted">Error</h6>
+                        <p class="card-text fs-4 mb-0"><span id="val-error">—</span> °C</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3 mt-1">
+            <div class="col-6 col-md-3">
                 <div class="card text-center">
                     <div class="card-body">
                         <h6 class="card-subtitle text-muted">Peltier</h6>
@@ -71,7 +83,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-6 col-md-4 col-lg">
+            <div class="col-6 col-md-3">
                 <div class="card text-center">
                     <div class="card-body">
                         <h6 class="card-subtitle text-muted">Pump</h6>
@@ -79,7 +91,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-6 col-md-4 col-lg">
+            <div class="col-6 col-md-3">
                 <div class="card text-center">
                     <div class="card-body">
                         <h6 class="card-subtitle text-muted">Heater</h6>
@@ -87,11 +99,38 @@
                     </div>
                 </div>
             </div>
-            <div class="col-6 col-md-4 col-lg">
+            <div class="col-6 col-md-3">
                 <div class="card text-center">
                     <div class="card-body">
                         <h6 class="card-subtitle text-muted">Resistance</h6>
                         <p class="card-text fs-4 mb-0"><span id="val-resistance">—</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3 mt-1">
+            <div class="col-12 col-md-4">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h6 class="card-subtitle text-muted">P term</h6>
+                        <p class="card-text fs-4 mb-0"><span id="val-p-term">—</span></p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h6 class="card-subtitle text-muted">I term</h6>
+                        <p class="card-text fs-4 mb-0"><span id="val-i-term">—</span></p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h6 class="card-subtitle text-muted">D term</h6>
+                        <p class="card-text fs-4 mb-0"><span id="val-d-term">—</span></p>
                     </div>
                 </div>
             </div>
@@ -127,7 +166,7 @@
                     </label>
                     <input type="range" class="form-range" id="ctrl-heater" min="0" max="255" step="1" value="128">
                 </div>
-                
+
                 <hr>
                 <h6 class="mb-3">PID parametre</h6>
                 <div class="row g-2 mb-3">
@@ -157,6 +196,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script
         src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1"></script>
     <script src="/static/js/dashboard.js"></script>
 </body>
 
