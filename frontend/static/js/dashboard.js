@@ -144,6 +144,27 @@ ctrlPumpPot.addEventListener("change", async () => {
     }
 });
 
+
+// PID controls
+const ctrlKp = document.getElementById("ctrl-kp");
+const ctrlKi = document.getElementById("ctrl-ki");
+const ctrlKd = document.getElementById("ctrl-kd");
+
+document.getElementById("ctrl-pid-apply").addEventListener("click", async () => {
+    const Kp = parseFloat(ctrlKp.value);
+    const Ki = parseFloat(ctrlKi.value);
+    const Kd = parseFloat(ctrlKd.value);
+
+    // Sends each parameter separately
+    await sendCommand({ Kp });
+    await sendCommand({ Ki });
+    await sendCommand({ Kd });
+});
+
+document.getElementById("ctrl-pid-reset").addEventListener("click", async () => {
+    await sendCommand({ reset: 1 });
+});
+
 // Command API handler
 async function sendCommand(payload) {
     try {
