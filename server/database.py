@@ -1,8 +1,11 @@
+import os
 import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
+from dotenv import load_dotenv
 
-DB_PATH = Path(__file__).parent / "data.db"
+load_dotenv()
+DB_PATH = Path(os.environ.get("DB_PATH"))
 
 
 @contextmanager

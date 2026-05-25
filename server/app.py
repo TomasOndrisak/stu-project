@@ -1,19 +1,27 @@
 import json
 import logging
+import os
 import sys
 from pathlib import Path
 
 import paho.mqtt.client as mqtt
+from dotenv import load_dotenv
 from flask import Flask, jsonify, render_template, request
 
 import database
 
+# Load .env
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 # Config
-MQTT_HOST       = "localhost"
-MQTT_PORT       = 1883
-TOPIC_TELEMETRY = "arduino/telemetry"
-TOPIC_COMMAND   = "arduino/command"
+MQTT_HOST       = os.environ.get("MQTT_HOST")
+MQTT_PORT       = int(os.environ.get("MQTT_PORT"))
+TOPIC_TELEMETRY = os.environ.get("TOPIC_TELEMETRY")
+TOPIC_COMMAND   = os.environ.get("TOPIC_COMMAND")
+
+FLASK_HOST      = os.environ.get("FLASK_HOST")
+FLASK_PORT      = int(os.environ.get("FLASK_PORT"))
+FLASK_DEBUG     = os.environ.get("FLASK_DEBUG", "false").lower() in ("true", "1", "yes")
 
 # Logger
 logging.basicConfig(
@@ -100,7 +108,7 @@ def api_command():
     return jsonify({"status": "ok"})
 
 
-# ── Štart aplikácie ─────────────────────────────
+# App startup
 def main():
     """DB Init, connection to MQTT, Flask startup."""
     log.info("Initializing database...")
@@ -110,8 +118,8 @@ def main():
     mqtt_client.connect(MQTT_HOST, MQTT_PORT, keepalive=60)
     mqtt_client.loop_start()
 
-    log.info("Starting Flask on 0.0.0.0:5000")
-    app.run(host="0.0.0.0", port=5000, debug=False)
+    log.info("Starting Flask on %s:%s", FLASK_HOST, FLASK_PORT)
+    app.run(host=FLASK_HOST, port=FLASK_PORT, debug=FLASK_DEBUG)
 
 
 if __name__ == "__main__":
