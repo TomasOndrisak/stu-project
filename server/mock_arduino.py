@@ -38,6 +38,8 @@ try:
         d_term = 0.0
 
         peltier_pwm = max(0, min(255, int(abs(p_term + i_term))))
+        flow_rate = pump_pwm / 255.0 * 10.0
+        total_ml = flow_rate * (t * 0.1) / 60.0 * 1000.0
 
         payload = {
             "cold":           round(cold, 1),
@@ -55,7 +57,9 @@ try:
             "heater_pwm":     heater_pwm,
             "resistance":     random.randint(400, 600),
             "pump_from_pot":  False,
-            "ts":             int(time.time())
+            "ts":             int(time.time()),
+            "flow_rate_lpm":  round(flow_rate, 2),
+            "total_ml":      round(total_ml, 2)
         }
 
         msg = json.dumps(payload)

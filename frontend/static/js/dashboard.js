@@ -15,7 +15,8 @@ const elements = {
     pTerm: document.getElementById("val-p-term"),
     iTerm: document.getElementById("val-i-term"),
     dTerm: document.getElementById("val-d-term"),
-
+    flowRate: document.getElementById("val-flow-rate"),
+    totalVolume: document.getElementById("val-total-ml"),
 };
 
 async function fetchCurrent() {
@@ -79,6 +80,8 @@ function updateCards(data) {
     elements.pTerm.textContent = data.p_term ?? "—";
     elements.iTerm.textContent = data.i_term ?? "—";
     elements.dTerm.textContent = data.d_term ?? "—";
+    elements.flowRate.textContent = data.flow_rate ?? "—";
+    elements.totalVolume.textContent = data.total_ml ?? "—";
 }
 
 async function fetchHistory() {

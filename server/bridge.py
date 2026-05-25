@@ -76,13 +76,21 @@ def open_serial():
             log.error("Cannot open %s: %s. Retrying in %ds...", SERIAL_PORT, e, RECONNECT_DELAY)
             time.sleep(RECONNECT_DELAY)
 
+def connect_mqtt():
+    while True:
+        try:
+            mqtt_client.connect(MQTT_HOST, MQTT_PORT, keepalive=60)
+            return
+        except (ConnectionRefusedError, OSError) as e:
+            log.error("MQTT connect failed: %s. Retrying in %ds", e, RECONNECT_DELAY)
+            time.sleep(RECONNECT_DELAY)
 
 def main():
     global ser
 
     log.info("Starting MISA serial bridge...")
     log.info("Connecting to MQTT broker %s:%s", MQTT_HOST, MQTT_PORT)
-    mqtt_client.connect(MQTT_HOST, MQTT_PORT, keepalive=60)
+    connect_mqtt()
     mqtt_client.loop_start()
 
     ser = open_serial()
@@ -99,9 +107,13 @@ def main():
 
             # Validate JSON before publishing to MQTT
             try:
-                json.loads(line)
+                parsed = json.loads(line)
             except json.JSONDecodeError:
                 log.warning("Invalid JSON from Arduino: %s", line)
+                continue
+
+            if "cold" not in parsed and "warm" not in parsed:
+                log.info("Non-telemetry message from Arduino: %s", line)
                 continue
 
             mqtt_client.publish(TOPIC_TELEMETRY, line)

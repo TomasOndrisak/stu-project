@@ -36,7 +36,9 @@ def init_db():
                 pump_pwm      INTEGER,
                 heater_pwm    INTEGER,
                 resistance    INTEGER,
-                pump_from_pot INTEGER
+                pump_from_pot INTEGER,
+                flow_rate     REAL,
+                total_ml      REAL
             )
         """)
         conn.execute("CREATE INDEX IF NOT EXISTS idx_ts ON measurements(timestamp)")
@@ -47,8 +49,8 @@ def insert_measurement(data: dict):
         conn.execute("""
             INSERT INTO measurements
                 (cold, warm, setpoint, error, p_term, i_term, d_term,
-                 peltier_pwm, pump_pwm, heater_pwm, resistance, pump_from_pot)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 peltier_pwm, pump_pwm, heater_pwm, resistance, pump_from_pot, flow_rate, total_ml)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             data.get("cold"),
             data.get("warm"),
@@ -62,6 +64,8 @@ def insert_measurement(data: dict):
             data.get("heater_pwm"),
             data.get("resistance"),
             1 if data.get("pump_from_pot") else 0,
+            data.get("flow_rate_lpm"),
+            data.get("total_ml")
         ))
 # Get the latest measurement from the DB. Returns a dict or None if DB is empty.
 def get_latest():

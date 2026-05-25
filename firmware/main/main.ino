@@ -8,10 +8,16 @@
 #define PUMP_PWM_PIN 11      // PWM výstup pre čerpadlo
 #define HEATER_PWM_PIN 9     // PWM výstup pre výhrevné teleso
 #define POTENTIOMETER_PIN A0 // Analógový vstup pre potenciometer pumpy
+#define FLOW_SENSOR_PIN 4    // Digitálny vstup pre flow sensor
+#define FLOW_INTERRUPT 0     // Interrupt číslo pre flow sensor
 
 // DS18B20 sensor properties
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature waterSensors(&oneWire);
+// Flow sensor
+volatile byte pulseCount = 0;
+float flowRate = 0.0; // litre/min
+unsigned long totalMilliLitres = 0;
 
 // PWM parameters
 int pumpPWM = 128;
@@ -35,7 +41,13 @@ unsigned long lastTime = 0;
 
 // Constants
 const unsigned long SAMPLE_PERIOD_MS = (unsigned long)(T * 1000);
-const int TEMP_DECIMAL_PRECISION = 1;
+const int DECIMAL_PRECISION = 1;
+const float FLOW_CALIBRATION = 4.5;
+
+void flowPulseCounter()
+{
+  pulseCount++;
+}
 
 void setup()
 {
@@ -46,6 +58,10 @@ void setup()
   pinMode(PUMP_PWM_PIN, OUTPUT);
   pinMode(HEATER_PWM_PIN, OUTPUT);
   pinMode(POTENTIOMETER_PIN, INPUT);
+
+  pinMode(FLOW_SENSOR_PIN, INPUT);
+  digitalWrite(FLOW_SENSOR_PIN, HIGH);
+  attachInterrupt(FLOW_INTERRUPT, flowPulseCounter, FALLING);
 }
 
 void loop()
@@ -75,6 +91,18 @@ void loop()
       resistance = analogRead(POTENTIOMETER_PIN);
       pumpPWM = map(resistance, 0, 1023, 0, 255);
     }
+
+    // Flow sensor calculations
+    detachInterrupt(FLOW_INTERRUPT);
+
+    flowRate = ((1000.0 / (millis() - lastTime)) * pulseCount) / FLOW_CALIBRATION;
+
+    unsigned int flowMilliLitres = (flowRate / 60) * 1000;
+    totalMilliLitres += flowMilliLitres;
+
+    pulseCount = 0;
+
+    attachInterrupt(FLOW_INTERRUPT, flowPulseCounter, FALLING);
 
     analogWrite(PELTIER_PWM_PIN, peltierPWM);
     analogWrite(PUMP_PWM_PIN, pumpPWM);
@@ -114,28 +142,32 @@ void publishJson(float tempInput, float tempOutput)
 {
   Serial.print("{\"cold\":");
   if (tempInput != DEVICE_DISCONNECTED_C)
-    Serial.print(tempInput, TEMP_DECIMAL_PRECISION);
+    Serial.print(tempInput, DECIMAL_PRECISION);
   else
     Serial.print("null");
 
   Serial.print(",\"warm\":");
   if (tempOutput != DEVICE_DISCONNECTED_C)
-    Serial.print(tempOutput, TEMP_DECIMAL_PRECISION);
+    Serial.print(tempOutput, DECIMAL_PRECISION);
   else
     Serial.print("null");
 
   Serial.print(",\"setpoint\":");
-  Serial.print(setpoint, TEMP_DECIMAL_PRECISION);
+  Serial.print(setpoint, DECIMAL_PRECISION);
   Serial.print(",\"peltier_pwm\":");
   Serial.print(peltierPWM);
   Serial.print(",\"pump_pwm\":");
   Serial.print(pumpPWM);
   Serial.print(",\"heater_pwm\":");
   Serial.print(heaterPWM);
-  Serial.print(",\"resistance\":");    
+  Serial.print(",\"resistance\":");
   Serial.print(resistance);
-  Serial.print(",\"pump_from_pot\":"); 
+  Serial.print(",\"pump_from_pot\":");
   Serial.print(pumpFromPot ? "true" : "false");
+  Serial.print(",\"flow_rate_lpm\":");
+  Serial.print(flowRate, DECIMAL_PRECISION);
+  Serial.print(",\"total_ml\":");
+  Serial.print(totalMilliLitres);
   Serial.println("}");
 }
 
