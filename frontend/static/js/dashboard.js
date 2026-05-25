@@ -81,22 +81,25 @@ function updateCharts(measurements) {
 }
 
 // Controls
+// Setpoint
 const ctrlSetpoint = document.getElementById("ctrl-setpoint");
 const ctrlSetpointValue = document.getElementById("ctrl-setpoint-value");
-const ctrlPump = document.getElementById("ctrl-pump");
-const ctrlPumpValue = document.getElementById("ctrl-pump-value");
-const ctrlPumpPot = document.getElementById("ctrl-pump-pot");
-
-// Setpoint input event
-ctrlSetpoint.addEventListener("input", () => {
-    ctrlSetpointValue.textContent = parseFloat(ctrlSetpoint.value).toFixed(1);
-});
 
 // Setpoint on change event
 ctrlSetpoint.addEventListener("change", async () => {
     const value = parseFloat(ctrlSetpoint.value);
     await sendCommand({ setpoint: value });
 });
+
+// Setpoint input event
+ctrlSetpoint.addEventListener("input", () => {
+    ctrlSetpointValue.textContent = parseFloat(ctrlSetpoint.value).toFixed(1);
+});
+
+// Pump
+const ctrlPump = document.getElementById("ctrl-pump");
+const ctrlPumpValue = document.getElementById("ctrl-pump-value");
+const ctrlPumpPot = document.getElementById("ctrl-pump-pot");
 
 // Pump input event - updates displayed value
 ctrlPump.addEventListener("input", () => {
@@ -111,6 +114,21 @@ ctrlPump.addEventListener("change", async () => {
     const value = parseInt(ctrlPump.value);
     await sendCommand({ pumpPWM: value });
 });
+
+// Heater
+const ctrlHeater = document.getElementById("ctrl-heater");
+const ctrlHeaterValue = document.getElementById("ctrl-heater-value");
+
+ctrlHeater.addEventListener("input", () => {
+    ctrlHeaterValue.textContent = ctrlHeater.value;
+});
+
+ctrlHeater.addEventListener("change", async () => {
+    const value = parseInt(ctrlHeater.value);
+    await sendCommand({ heaterPWM: value });
+});
+
+
 
 // On change event - sends command to backend
 ctrlPumpPot.addEventListener("change", async () => {
