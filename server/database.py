@@ -5,7 +5,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 load_dotenv()
-DB_PATH = Path(os.environ.get("DB_PATH"))
+DB_PATH = Path(os.getenv("DB_PATH", Path(__file__).parent / "data.db"))
 
 
 @contextmanager

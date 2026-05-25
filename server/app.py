@@ -14,14 +14,13 @@ import database
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 # Config
-MQTT_HOST       = os.environ.get("MQTT_HOST")
-MQTT_PORT       = int(os.environ.get("MQTT_PORT"))
-TOPIC_TELEMETRY = os.environ.get("TOPIC_TELEMETRY")
-TOPIC_COMMAND   = os.environ.get("TOPIC_COMMAND")
-
-FLASK_HOST      = os.environ.get("FLASK_HOST")
-FLASK_PORT      = int(os.environ.get("FLASK_PORT"))
-FLASK_DEBUG     = os.environ.get("FLASK_DEBUG", "false").lower() in ("true", "1", "yes")
+MQTT_HOST       = os.getenv("MQTT_HOST", "localhost")
+MQTT_PORT       = int(os.getenv("MQTT_PORT", 1883))
+TOPIC_TELEMETRY = os.getenv("TOPIC_TELEMETRY", "arduino/telemetry")
+TOPIC_COMMAND   = os.getenv("TOPIC_COMMAND", "arduino/command")
+FLASK_HOST      = os.getenv("FLASK_HOST", "0.0.0.0")
+FLASK_PORT      = int(os.getenv("FLASK_PORT", 5000))
+FLASK_DEBUG     = os.getenv("FLASK_DEBUG", "false").lower() == "true"
 
 # Logger
 logging.basicConfig(
@@ -110,7 +109,6 @@ def api_command():
 
 # App startup
 def main():
-    """DB Init, connection to MQTT, Flask startup."""
     log.info("Initializing database...")
     database.init_db()
 

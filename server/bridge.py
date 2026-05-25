@@ -13,13 +13,13 @@ from dotenv import load_dotenv
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 # Config
-SERIAL_PORT     = os.environ.get("SERIAL_PORT")  # Linux: /dev/ttyACM0 or /dev/ttyUSB0
-SERIAL_BAUD     = int(os.environ.get("SERIAL_BAUD"))
-MQTT_HOST       = os.environ.get("MQTT_HOST")
-MQTT_PORT       = int(os.environ.get("MQTT_PORT"))
-TOPIC_TELEMETRY = os.environ.get("TOPIC_TELEMETRY")
-TOPIC_COMMAND   = os.environ.get("TOPIC_COMMAND")
-RECONNECT_DELAY = int(os.environ.get("RECONNECT_DELAY"))
+SERIAL_PORT     = os.getenv("SERIAL_PORT", "COM3")  # Linux: /dev/ttyACM0 or /dev/ttyUSB0
+SERIAL_BAUD     = int(os.getenv("SERIAL_BAUD", 9600))
+MQTT_HOST       = os.getenv("MQTT_HOST", "localhost")
+MQTT_PORT       = int(os.getenv("MQTT_PORT", 1883))
+TOPIC_TELEMETRY = os.getenv("TOPIC_TELEMETRY", "arduino/telemetry")
+TOPIC_COMMAND   = os.getenv("TOPIC_COMMAND", "arduino/command")
+RECONNECT_DELAY = int(os.getenv("RECONNECT_DELAY", 5))
 
 # Logger
 logging.basicConfig(
