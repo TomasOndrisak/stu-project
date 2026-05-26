@@ -17,7 +17,51 @@ const elements = {
     dTerm: document.getElementById("val-d-term"),
     flowRate: document.getElementById("val-flow-rate"),
     totalVolume: document.getElementById("val-total-ml"),
+    lastUpdateAbs: document.getElementById("last-update-abs"),
+    lastUpdateRel: document.getElementById("last-update-rel"),
 };
+
+let lastTimestamp = null;
+
+function updateLastUpdate(timestamp) {
+    if (!timestamp) {
+        elements.lastUpdateAbs.textContent = "—";
+        elements.lastUpdateRel.textContent = "";
+        return;
+    }
+
+    lastTimestamp = new Date(timestamp);
+
+    if (isNaN(lastTimestamp.getTime())) {
+        elements.lastUpdateAbs.textContent = "—";
+        elements.lastUpdateRel.textContent = "neplatný čas";
+        return;
+    }
+
+    elements.lastUpdateAbs.textContent = lastTimestamp.toLocaleTimeString("sk-SK");
+    refreshRelativeTime();
+}
+
+function refreshRelativeTime() {
+    if (!lastTimestamp) return;
+
+    const diffSec = Math.floor((new Date() - lastTimestamp) / 1000);
+    let text;
+
+    if (diffSec < 2) text = "";
+    else if (diffSec < 60) text = `pred ${diffSec} s`;
+    else if (diffSec < 3600) text = `pred ${Math.floor(diffSec / 60)} min`;
+    else text = `(pred ${Math.floor(diffSec / 3600)} h)`;
+
+    elements.lastUpdateRel.textContent = text;
+
+    if (diffSec > 5) {
+        elements.lastUpdateRel.classList.add("text-danger");
+    } else {
+        elements.lastUpdateRel.classList.remove("text-danger");
+    }
+}
+
 
 async function fetchCurrent() {
     try {
@@ -33,12 +77,16 @@ async function fetchCurrent() {
         updateCards(data);
         elements.status.textContent = "● Server Connected";
 
+        updateLastUpdate(data.timestamp);
+
+
         updateArduinoStatus(data.timestamp);
 
     } catch (error) {
         console.error("Fetch error:", error);
         elements.status.textContent = "● Error fetching data";
         updateArduinoStatus(null);
+        updateLastUpdate(null);
     }
 }
 
@@ -326,7 +374,9 @@ const chartError = new Chart(
 
 
 fetchCurrent();
+
 setInterval(fetchCurrent, REFRESH_INTERVAL_MS);
 
 fetchHistory();
 setInterval(fetchHistory, 5000);
+setInterval(refreshRelativeTime, 1000);

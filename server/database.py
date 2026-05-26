@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 import os
 import sqlite3
 from contextlib import contextmanager
@@ -73,7 +74,7 @@ def get_latest():
         row = conn.execute(
             "SELECT * FROM measurements ORDER BY timestamp DESC LIMIT 1"
         ).fetchone()
-        return dict(row) if row else None
+        return _normalize_timestamp(dict(row)) if row else None
 
 # Get measurements from the last N hours. Returns a list of dicts.    
 def get_history(hours: int = 24):
@@ -83,4 +84,13 @@ def get_history(hours: int = 24):
             WHERE timestamp > datetime('now', ?)
             ORDER BY timestamp ASC
         """, (f"-{hours} hours",)).fetchall()
-        return [dict(row) for row in rows]
+        return [_normalize_timestamp(dict(row)) for row in rows]
+    
+# SQLite UTC to ISO 8601 with time zone
+def _normalize_timestamp(row_dict):
+    ts = row_dict.get("timestamp")
+    if ts and isinstance(ts, str):
+        # SQLite CURRENT_TIMESTAMP returns "YYYY-MM-DD HH:MM:SS" in UTC
+        dt = datetime.strptime(ts, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
+        row_dict["timestamp"] = dt.isoformat()
+    return row_dict
