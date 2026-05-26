@@ -8,8 +8,7 @@
 #define PUMP_PWM_PIN 11      // PWM výstup pre čerpadlo
 #define HEATER_PWM_PIN 9     // PWM výstup pre výhrevné teleso
 #define POTENTIOMETER_PIN A0 // Analógový vstup pre potenciometer pumpy
-#define FLOW_SENSOR_PIN 4    // Digitálny vstup pre flow sensor
-#define FLOW_INTERRUPT 0     // Interrupt číslo pre flow sensor
+#define FLOW_SENSOR_PIN 3    // Digitálny vstup pre flow sensor
 
 // DS18B20 sensor properties
 OneWire oneWire(ONE_WIRE_BUS);
@@ -17,10 +16,10 @@ DallasTemperature waterSensors(&oneWire);
 DeviceAddress sensorCold, sensorWarm;
 
 // Flow sensor
-volatile unsigned int pulseCount = 0;
+volatile int pulseCount = 0;
 float flowRate = 0.0; // litre/min
 unsigned long totalMilliLitres = 0;
-const float FLOW_CALIBRATION = 7.5;
+const float FLOW_CALIBRATION = 4.5;
 
 // PWM parameters
 int pumpPWM = 128;
@@ -105,7 +104,7 @@ void setup()
   pinMode(POTENTIOMETER_PIN, INPUT);
 
   pinMode(FLOW_SENSOR_PIN, INPUT_PULLUP);
-  attachInterrupt(FLOW_INTERRUPT, flowPulseCounter, FALLING);
+  attachInterrupt(digitalPinToInterrupt(FLOW_SENSOR_PIN), flowPulseCounter, FALLING);
 
   waterSensors.requestTemperatures();
 }
@@ -150,18 +149,18 @@ void loop()
     }
 
     // Flow sensor calculations
-    detachInterrupt(FLOW_INTERRUPT);
+    detachInterrupt(digitalPinToInterrupt(FLOW_SENSOR_PIN));
     flowRate = ((float)pulseCount / T) / FLOW_CALIBRATION;
     unsigned int flowMilliLitres = (flowRate / 60.0) * 1000.0 * T;
     totalMilliLitres += flowMilliLitres;
-    pulseCount = 0;
-    attachInterrupt(FLOW_INTERRUPT, flowPulseCounter, FALLING);
 
+    attachInterrupt(digitalPinToInterrupt(FLOW_SENSOR_PIN), flowPulseCounter, FALLING);
     analogWrite(PELTIER_PWM_PIN, peltierPWM);
     analogWrite(PUMP_PWM_PIN, pumpPWM);
     analogWrite(HEATER_PWM_PIN, heaterPWM);
 
     publishJson(tempInput, tempOutput);
+    pulseCount = 0;
   }
 }
 
