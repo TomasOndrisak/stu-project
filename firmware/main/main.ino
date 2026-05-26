@@ -140,19 +140,18 @@ void loop()
 
     if (pumpFromPot)
     {
-      resistance = analogRead(POTENTIOMETER_PIN);
-      pumpPWM = map(resistance, 0, 1023, 0, 255);
-
       int rawPotValue = analogRead(POTENTIOMETER_PIN);
-      // linearised value
+
       resistance = (int)(POT_TOTAL_RESISTANCE * ((float)rawPotValue / 1023.0));
+
+      // Linearised value
       int linearPotValue = potentiometerLinearisation(rawPotValue);
       pumpPWM = map(linearPotValue, 0, 1023, 0, 255);
     }
 
     // Flow sensor calculations
     detachInterrupt(FLOW_INTERRUPT);
-    flowRate = (float)pulseCount / FLOW_CALIBRATION;
+    flowRate = ((float)pulseCount / T) / FLOW_CALIBRATION;
     unsigned int flowMilliLitres = (flowRate / 60.0) * 1000.0 * T;
     totalMilliLitres += flowMilliLitres;
     pulseCount = 0;

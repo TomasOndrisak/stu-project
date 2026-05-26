@@ -52,9 +52,9 @@ function refreshRelativeTime() {
     let text;
 
     if (diffSec < 2) text = "";
-    else if (diffSec < 60) text = `pred ${diffSec} s`;
-    else if (diffSec < 3600) text = `pred ${Math.floor(diffSec / 60)} min`;
-    else text = `(pred ${Math.floor(diffSec / 3600)} h)`;
+    else if (diffSec < 60) text = `before ${diffSec} s`;
+    else if (diffSec < 3600) text = `before ${Math.floor(diffSec / 60)} min`;
+    else text = `(before ${Math.floor(diffSec / 3600)} h)`;
 
     elements.lastUpdateRel.textContent = text;
 
