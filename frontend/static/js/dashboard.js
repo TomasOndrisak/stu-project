@@ -1,6 +1,9 @@
 const REFRESH_INTERVAL_MS = 1000;
 const CHART_HOURS = 1; // 1 hour of history
-
+const THRESHOLDS = {
+    error: { warn: 0.5, crit: 2.0 },
+    cold: { okMin: 15, okMax: 30, warnMin: 10, warnMax: 35 },
+}
 
 const elements = {
     status: document.getElementById("status"),
@@ -66,13 +69,13 @@ function refreshRelativeTime() {
 async function fetchCurrent() {
     try {
         const response = await fetch("/api/current");
-        
+
         if (!response.ok) {
             elements.status.textContent = "● No data";
             updateArduinoStatus(null);
             return;
         }
-        
+
         const data = await response.json();
         updateCards(data);
         elements.status.textContent = "● Server Connected";
@@ -100,7 +103,7 @@ function updateArduinoStatus(timestamp) {
         return;
     }
 
-  
+
     const lastUpdate = new Date(timestamp);
     const now = new Date();
     const diffMs = now - lastUpdate;
@@ -114,6 +117,28 @@ function updateArduinoStatus(timestamp) {
         arduinoStatusBadge.classList.remove('bg-neutral', 'bg-danger', 'bg-secondary');
         arduinoStatusBadge.classList.add('bg-success');
     }
+}
+
+function classifyError(value) {
+    if (value === null || value === undefined) return "";
+    const abs = Math.abs(value);
+    if (abs > THRESHOLDS.error.crit) return "threshold-critical";
+    if (abs > THRESHOLDS.error.warn) return "threshold-warning";
+    return "threshold-ok";
+}
+
+function classifyRange(value, cfg) {
+    if (value === null || value === undefined) return "";
+    if (value >= cfg.okMin && value <= cfg.okMax) return "threshold-ok";
+    if (value >= cfg.warnMin && value <= cfg.warnMax) return "threshold-warning";
+    return "threshold-critical";
+}
+
+function applyThreshold(cardId, className) {
+    const card = document.getElementById(cardId);
+    if (!card) return;
+    card.classList.remove("threshold-ok", "threshold-warning", "threshold-critical");
+    if (className) card.classList.add(className);
 }
 
 function updateCards(data) {
@@ -130,6 +155,8 @@ function updateCards(data) {
     elements.dTerm.textContent = data.d_term ?? "—";
     elements.flowRate.textContent = data.flow_rate ?? "—";
     elements.totalVolume.textContent = data.total_ml ?? "—";
+    applyThreshold("card-error", classifyError(data.error));
+    applyThreshold("card-cold", classifyRange(data.cold, THRESHOLDS.cold));
 }
 
 async function fetchHistory() {
