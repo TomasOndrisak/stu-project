@@ -1,7 +1,7 @@
 const REFRESH_INTERVAL_MS = 1000;
 const CHART_HOURS = 1; // 1 hour of history
 const THRESHOLDS = {
-    error: { warn: 0.5, crit: 2.0 },
+    error: { warn: 0.5, crit: 3.0 },
     cold: { okMin: 15, okMax: 30, warnMin: 10, warnMax: 35 },
 }
 
@@ -405,5 +405,5 @@ fetchCurrent();
 setInterval(fetchCurrent, REFRESH_INTERVAL_MS);
 
 fetchHistory();
-setInterval(fetchHistory, 5000);
+setInterval(fetchHistory, 1000);
 setInterval(refreshRelativeTime, 1000);
