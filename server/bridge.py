@@ -35,6 +35,7 @@ log = logging.getLogger(__name__)
 # MQTT client
 mqtt_client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 ser = None  # Serial port initialized in main()
+mqtt_client.reconnect_delay_set(min_delay=1, max_delay=30)
 
 # After connecting to MQTT broker, subscribe to command topic
 def on_connect(client, userdata, flags, rc, properties=None):
@@ -44,6 +45,9 @@ def on_connect(client, userdata, flags, rc, properties=None):
     else:
         log.error("MQTT connection failed, rc=%s", rc)
 
+def on_disconnect(client, userdata, disconnect_flags, rc, properties=None):
+    if rc != 0:
+        log.warning("MQTT disconnected unexpectedly rc=%s, reconnecting...", rc)
 
 # Command from backend send to Arduino via Serial
 def on_message(client, userdata, msg):
@@ -63,6 +67,7 @@ def on_message(client, userdata, msg):
 
 mqtt_client.on_connect = on_connect
 mqtt_client.on_message = on_message
+mqtt_client.on_disconnect = on_disconnect
 
 
 # Serial reconnection logic
