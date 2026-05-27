@@ -20,6 +20,8 @@ MQTT_PORT       = int(os.getenv("MQTT_PORT", 1883))
 TOPIC_TELEMETRY = os.getenv("TOPIC_TELEMETRY", "arduino/telemetry")
 TOPIC_COMMAND   = os.getenv("TOPIC_COMMAND", "arduino/command")
 RECONNECT_DELAY = int(os.getenv("RECONNECT_DELAY", 5))
+TOPIC_ALERT = os.getenv("TOPIC_ALERT", "arduino/alert")
+ALERT_ERROR_THRESHOLD = float(os.getenv("ALERT_ERROR_THRESHOLD", "5.0"))
 
 # Logger
 logging.basicConfig(
@@ -85,6 +87,23 @@ def connect_mqtt():
             log.error("MQTT connect failed: %s. Retrying in %ds", e, RECONNECT_DELAY)
             time.sleep(RECONNECT_DELAY)
 
+# Check telemetry for alert conditions and publish alert if needed
+def check_and_publish_alert(parsed: dict) -> None:
+    error = parsed.get("error")
+    if error is None:
+        return
+
+    if abs(error) > ALERT_ERROR_THRESHOLD:
+        payload = json.dumps({
+            "type": "setpoint_deviation",
+            "error": error,
+            "cold": parsed.get("cold"),
+            "setpoint": parsed.get("setpoint"),
+            "ts": int(time.time()),
+        })
+        mqtt_client.publish(TOPIC_ALERT, payload)
+        log.warning("ALERT published: error=%.3f > threshold=%.1f", error, ALERT_ERROR_THRESHOLD)
+
 def main():
     global ser
 
@@ -117,6 +136,7 @@ def main():
                 continue
 
             mqtt_client.publish(TOPIC_TELEMETRY, line)
+            check_and_publish_alert(parsed)
             log.info("Published telemetry: %s", line)
 
         except serial.SerialException as e:

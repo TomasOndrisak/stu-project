@@ -26,6 +26,18 @@ const elements = {
 
 let lastTimestamp = null;
 
+function checkThresholdAlert() {
+    fetch("/api/alert")
+        .then(r => r.status === 204 ? null : r.json())
+        .then(data => { if (data) showAlertToast(data); });
+}
+
+function showAlertToast(data) {
+    const body = document.getElementById("alertToastBody");
+    body.innerHTML = `Error is bigger than threshold ${THRESHOLDS.error.crit}: ${data.error.toFixed(1)} °C<br>Setpoint: ${data.setpoint} °C`;
+    bootstrap.Toast.getOrCreateInstance(document.getElementById("alertToast")).show();
+}
+
 function updateLastUpdate(timestamp) {
     if (!timestamp) {
         elements.lastUpdateAbs.textContent = "—";
@@ -51,7 +63,7 @@ function refreshRelativeTime() {
     const diffSec = Math.floor((new Date() - lastTimestamp) / 1000);
     let text;
 
-    if (diffSec < 2) text = "";
+    if (diffSec < 5) text = "";
     else if (diffSec < 60) text = `before ${diffSec} s`;
     else if (diffSec < 3600) text = `before ${Math.floor(diffSec / 60)} min`;
     else text = `(before ${Math.floor(diffSec / 3600)} h)`;
@@ -407,3 +419,4 @@ setInterval(fetchCurrent, REFRESH_INTERVAL_MS);
 fetchHistory();
 setInterval(fetchHistory, 1000);
 setInterval(refreshRelativeTime, 1000);
+setInterval(checkThresholdAlert, 5000);

@@ -21,6 +21,7 @@ TOPIC_COMMAND   = os.getenv("TOPIC_COMMAND", "arduino/command")
 FLASK_HOST      = os.getenv("FLASK_HOST", "0.0.0.0")
 FLASK_PORT      = int(os.getenv("FLASK_PORT", 5000))
 FLASK_DEBUG     = os.getenv("FLASK_DEBUG", "false").lower() == "true"
+TOPIC_ALERT = os.getenv("TOPIC_ALERT", "arduino/alert")
 
 # Logger
 logging.basicConfig(
@@ -45,18 +46,31 @@ app = Flask(
 # MQTT instnace
 mqtt_client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 
-# MQTT callback after connecting to the broker. Subscribes to telemetry topic.
+# MQTT callback after connecting to the broker. Subscribes to mqtt topics.
 def on_connect(client, userdata, flags, rc, properties=None):
     if rc == 0:
         log.info("MQTT connected, subscribing to %s", TOPIC_TELEMETRY)
         client.subscribe(TOPIC_TELEMETRY)
+        log.info("Subscribed to %s", TOPIC_COMMAND)
+        
+        log.info("MQTT connected, subscribing to %s", TOPIC_ALERT)
+        client.subscribe(TOPIC_ALERT)
+        log.info("Subscribed to %s", TOPIC_ALERT)
+
     else:
         log.error("MQTT connection failed, rc=%s", rc)
 
 # MQTT callback after receiving a message. Parses JSON and saves to DB.
 def on_message(client, userdata, msg):
+    global latest_alert
     try:
         data = json.loads(msg.payload.decode())
+
+        if msg.topic == TOPIC_ALERT:
+            latest_alert = data
+            log.warning("Alert received at: %s", data)
+            return
+
         database.insert_measurement(data)
         log.info("Saved: cold=%s warm=%s peltier_pwm=%s",
                  data.get("cold"), data.get("warm"), data.get("peltier_pwm"))
@@ -67,6 +81,8 @@ def on_message(client, userdata, msg):
 
 mqtt_client.on_connect = on_connect
 mqtt_client.on_message = on_message
+
+latest_alert: dict | None = None
 
 # GET
 # Default route to homepage
@@ -105,6 +121,15 @@ def api_command():
     mqtt_client.publish(TOPIC_COMMAND, msg)
     log.info("Command sent: %s", msg)
     return jsonify({"status": "ok"})
+
+@app.route("/api/alert")
+def api_alert():
+    global latest_alert
+    if not latest_alert:
+        return jsonify(None), 204
+    alert = latest_alert
+    latest_alert = None
+    return jsonify(alert)
 
 
 # App startup
