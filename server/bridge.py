@@ -22,6 +22,7 @@ TOPIC_COMMAND   = os.getenv("TOPIC_COMMAND", "arduino/command")
 RECONNECT_DELAY = int(os.getenv("RECONNECT_DELAY", 5))
 TOPIC_ALERT = os.getenv("TOPIC_ALERT", "arduino/alert")
 ALERT_ERROR_THRESHOLD = float(os.getenv("ALERT_ERROR_THRESHOLD", "5.0"))
+BUFFER_FILE = Path(os.getenv("BUFFER_FILE", "data/buffer.jsonl"))
 
 # Logger
 logging.basicConfig(
@@ -36,16 +37,23 @@ log = logging.getLogger(__name__)
 mqtt_client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 ser = None  # Serial port initialized in main()
 mqtt_client.reconnect_delay_set(min_delay=1, max_delay=30)
+mqtt_connected = False
 
 # After connecting to MQTT broker, subscribe to command topic
 def on_connect(client, userdata, flags, rc, properties=None):
+    global mqtt_connected
     if rc == 0:
+        mqtt_connected = True
         log.info("MQTT connected, subscribing to %s", TOPIC_COMMAND)
         client.subscribe(TOPIC_COMMAND)
+        replay_backup(client)  # Send any buffered telemetry data on startup
+
     else:
         log.error("MQTT connection failed, rc=%s", rc)
 
 def on_disconnect(client, userdata, disconnect_flags, rc, properties=None):
+    global mqtt_connected
+    mqtt_connected = False
     if rc != 0:
         log.warning("MQTT disconnected unexpectedly rc=%s, reconnecting...", rc)
 
@@ -69,6 +77,31 @@ mqtt_client.on_connect = on_connect
 mqtt_client.on_message = on_message
 mqtt_client.on_disconnect = on_disconnect
 
+# Buffering when mqtt is not connected
+def backup_locally(line: str) -> None:
+    try:
+        BUFFER_FILE.parent.mkdir(parents=True, exist_ok=True)
+        with open(BUFFER_FILE, "a") as f:
+            f.write(line + "\n")
+    except Exception as e:
+        log.error("Failed to buffer locally: %s", e)
+
+# Try to publish buffered data on startup, then clear buffer if successful
+def replay_backup(client: mqtt.Client) -> None:
+    if not BUFFER_FILE.exists():
+        return
+    try:
+        with open(BUFFER_FILE) as f:
+            lines = f.readlines()
+        for line in lines:
+            line = line.strip()
+            if line:
+                client.publish(TOPIC_TELEMETRY, line)
+                log.info("Replayed from buffer: %s", line)
+        BUFFER_FILE.unlink()
+        log.info("Buffer replayed and cleared records.")
+    except Exception as e:
+        log.error("Failed to replay buffer: %s", e)
 
 # Serial reconnection logic
 def open_serial():
@@ -140,9 +173,13 @@ def main():
                 log.info("Non-telemetry message from Arduino: %s", line)
                 continue
 
-            mqtt_client.publish(TOPIC_TELEMETRY, line)
-            check_and_publish_alert(parsed)
-            log.info("Published telemetry: %s", line)
+            if mqtt_connected:
+                mqtt_client.publish(TOPIC_TELEMETRY, line)
+                check_and_publish_alert(parsed)
+                log.info("Published telemetry: %s", line)
+            else:
+                backup_locally(line)
+                log.warning("MQTT not connected, sending telemetry to buffer: %s", line)
 
         except serial.SerialException as e:
             log.error("Serial error: %s. Reopening...", e)
