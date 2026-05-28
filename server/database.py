@@ -76,14 +76,14 @@ def get_latest():
         ).fetchone()
         return _normalize_timestamp(dict(row)) if row else None
 
-# Get measurements from the last N hours. Returns a list of dicts.    
-def get_history(hours: int = 24):
+# Get measurements from the last N minutes. Returns a list of dicts.
+def get_history(minutes: int = 1440):
     with get_connection() as conn:
         rows = conn.execute("""
             SELECT * FROM measurements
             WHERE timestamp > datetime('now', ?)
             ORDER BY timestamp ASC
-        """, (f"-{hours} hours",)).fetchall()
+        """, (f"-{minutes} minutes",)).fetchall()
         return [_normalize_timestamp(dict(row)) for row in rows]
     
 # SQLite UTC to ISO 8601 with time zone

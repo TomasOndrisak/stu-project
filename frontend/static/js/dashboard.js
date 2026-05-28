@@ -1,9 +1,13 @@
 const REFRESH_INTERVAL_MS = 1000;
-const CHART_HOURS = 1; // 1 hour of history
+const HISTORY_REFRESH_INTERVAL_MS = 1000;
+const DEFAULT_RANGE_MINUTES = 60;
 const THRESHOLDS = {
     error: { warn: 0.5, crit: 3.0 },
     cold: { okMin: 15, okMax: 30, warnMin: 10, warnMax: 35 },
 }
+
+// Currently selected history range in minutes.
+let currentRangeMinutes = DEFAULT_RANGE_MINUTES;
 
 const elements = {
     status: document.getElementById("status"),
@@ -157,9 +161,9 @@ function updateCards(data) {
     elements.cold.textContent = data.cold ?? "—";
     elements.warm.textContent = data.warm ?? "—";
     elements.setpoint.textContent = data.setpoint ?? "—";
-    elements.peltier.textContent = data.peltier_pwm ?? "—";
-    elements.pump.textContent = data.pump_pwm ?? "—";
-    elements.heater.textContent = data.heater_pwm ?? "—";
+    elements.peltier.textContent = `${Math.round(data.peltier_pwm / 2.55)} %` ?? "—";
+    elements.pump.textContent = `${Math.round(data.pump_pwm / 2.55)} %` ?? "—";
+    elements.heater.textContent = `${Math.round(data.heater_pwm / 2.55)} %` ?? "—";
     elements.resistance.textContent = data.resistance ?? "—";
     elements.error.textContent = data.error ?? "—";
     elements.pTerm.textContent = data.p_term ?? "—";
@@ -173,7 +177,7 @@ function updateCards(data) {
 
 async function fetchHistory() {
     try {
-        const response = await fetch(`/api/history?hours=${CHART_HOURS}`);
+        const response = await fetch(`/api/history?minutes=${currentRangeMinutes}`);
 
         if (!response.ok) {
             console.warn("History fetch failed:", response.status);
@@ -186,6 +190,18 @@ async function fetchHistory() {
     } catch (error) {
         console.error("History fetch error:", error);
     }
+}
+
+function timeUnitForRange(minutes) {
+    if (minutes <= 5) return "second";
+    if (minutes <= 60) return "minute";
+    return "hour";
+}
+
+function applyChartTimeUnit(minutes) {
+    const unit = timeUnitForRange(minutes);
+    chartTemperatures.options.scales.x.time.unit = unit;
+    chartError.options.scales.x.time.unit = unit;
 }
 
 function updateCharts(measurements) {
@@ -203,6 +219,28 @@ function updateCharts(measurements) {
 
     chartError.data.datasets[0].data = points.map(p => p.error);
     chartError.update("none");
+}
+
+function initRangeSelector() {
+    const group = document.getElementById("chart-range-group");
+    if (!group) return;
+
+    group.addEventListener("click", (event) => {
+        const btn = event.target.closest("button[data-range]");
+        if (!btn) return;
+
+        const minutes = parseInt(btn.dataset.range, 10);
+        if (!Number.isFinite(minutes) || minutes === currentRangeMinutes) return;
+
+        currentRangeMinutes = minutes;
+
+        group.querySelectorAll("button[data-range]").forEach(b => {
+            b.classList.toggle("active", b === btn);
+        });
+
+        applyChartTimeUnit(minutes);
+        fetchHistory();
+    });
 }
 
 // Controls
@@ -228,7 +266,7 @@ const ctrlPumpPot = document.getElementById("ctrl-pump-pot");
 
 // Pump input event - updates displayed value
 ctrlPump.addEventListener("input", () => {
-    ctrlPumpValue.textContent = ctrlPump.value;
+    ctrlPumpValue.textContent = `${Math.round(ctrlPump.value / 2.55)} % (${ctrlPump.value} PWM)`;
 });
 
 // On change event - sends command to backend
@@ -245,7 +283,7 @@ const ctrlHeater = document.getElementById("ctrl-heater");
 const ctrlHeaterValue = document.getElementById("ctrl-heater-value");
 
 ctrlHeater.addEventListener("input", () => {
-    ctrlHeaterValue.textContent = ctrlHeater.value;
+    ctrlHeaterValue.textContent = `${Math.round(ctrlHeater.value / 2.55)} % (${ctrlHeater.value} PWM)`;
 });
 
 ctrlHeater.addEventListener("change", async () => {
@@ -347,7 +385,7 @@ const chartTemperatures = new Chart(
             scales: {
                 x: {
                     type: "time",
-                    time: { unit: "minute" },
+                    time: { unit: timeUnitForRange(DEFAULT_RANGE_MINUTES) },
                 },
                 y: {
                     title: { display: true, text: "°C" },
@@ -379,7 +417,7 @@ const chartError = new Chart(
             scales: {
                 x: {
                     type: "time",
-                    time: { unit: "minute" },
+                    time: { unit: timeUnitForRange(DEFAULT_RANGE_MINUTES) },
                 },
                 y: {
                     title: { display: true, text: "Error (°C)" },
@@ -412,11 +450,13 @@ const chartError = new Chart(
 );
 
 
+initRangeSelector();
+
 fetchCurrent();
 
 setInterval(fetchCurrent, REFRESH_INTERVAL_MS);
 
 fetchHistory();
-setInterval(fetchHistory, 1000);
+setInterval(fetchHistory, HISTORY_REFRESH_INTERVAL_MS);
 setInterval(refreshRelativeTime, 1000);
 setInterval(checkThresholdAlert, 5000);

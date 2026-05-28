@@ -47,6 +47,15 @@
     </nav>
 
     <main class="container py-4">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h2 class="h6 mb-0">History</h2>
+            <div class="btn-group btn-group-sm" role="group" aria-label="Chart range" id="chart-range-group">
+                <button type="button" class="btn btn-outline-primary" data-range="5">5 min</button>
+                <button type="button" class="btn btn-outline-primary active" data-range="60">1 h</button>
+                <button type="button" class="btn btn-outline-primary" data-range="720">12 h</button>
+                <button type="button" class="btn btn-outline-primary" data-range="1440">24 h</button>
+            </div>
+        </div>
         <div class="row g-3 mb-4">
             <div class="col-12 col-lg-6">
                 <h2 class="h6 mb-2">Temperatures</h2>
@@ -79,7 +88,7 @@
             <div class="col-6 col-md-3">
                 <div class="card text-center threshold-card" id="card-cold">
                     <div class="card-body">
-                        <h6 class="card-subtitle text-muted">Cold</h6>
+                        <h6 class="card-subtitle text-muted">Cold (output)</h6>
                         <p class="card-text fs-4 mb-0"><span id="val-cold">—</span> °C</p>
                     </div>
                 </div>
@@ -87,7 +96,7 @@
             <div class="col-6 col-md-3">
                 <div class="card text-center">
                     <div class="card-body">
-                        <h6 class="card-subtitle text-muted">Warm</h6>
+                        <h6 class="card-subtitle text-muted">Warm (input)</h6>
                         <p class="card-text fs-4 mb-0"><span id="val-warm">—</span> °C</p>
                     </div>
                 </div>
@@ -139,7 +148,7 @@
                 <div class="card text-center">
                     <div class="card-body">
                         <h6 class="card-subtitle text-muted">Resistance</h6>
-                        <p class="card-text fs-4 mb-0"><span id="val-resistance">—</span></p>
+                        <p class="card-text fs-4 mb-0"><span id="val-resistance">—</span> Ω</p>
                     </div>
                 </div>
             </div>

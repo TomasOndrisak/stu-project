@@ -99,12 +99,15 @@ def api_current():
         return jsonify({"error": "no data"}), 404
     return jsonify(data)
 
-# API endpoint to get historical data for the last N hours. Returns JSON list. Default range is 24 hours
+# API endpoint to get historical data for the last N minutes. Returns JSON list. Default range is 24 hours
 @app.route("/api/history")
 def api_history():
-    hours = request.args.get("hours", default=24, type=int)
-    hours = max(1, min(hours, 168))
-    return jsonify(database.get_history(hours))
+    minutes = request.args.get("minutes", type=int)
+    if minutes is None:
+        hours = request.args.get("hours", default=24, type=int)
+        minutes = hours * 60
+    minutes = max(1, min(minutes, 168 * 60))  
+    return jsonify(database.get_history(minutes))
 
 # POST
 # API endpoint to send a command to Arduino through MQTT arduino/command.
