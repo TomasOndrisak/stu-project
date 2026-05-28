@@ -35,9 +35,6 @@ let lastTimestamp = null;
 
 function checkThresholdAlert() {
     fetch("/api/alert", {
-        headers: {
-            "ngrok-skip-browser-warning": "true"
-        }
     })
         .then(r => r.status === 204 ? null : r.json())
         .then(data => { if (data) showAlertToast(data); });
@@ -92,9 +89,6 @@ function refreshRelativeTime() {
 async function fetchCurrent() {
     try {
         const response = await fetch("/api/current", {
-            headers: {
-                "ngrok-skip-browser-warning": "true"
-            }
         });
 
         if (!response.ok) {
@@ -248,6 +242,8 @@ let historyAbortController = null;
 
 async function fetchHistory() {
 
+    if (liveMode) return;
+
     if (historyAbortController) {
         historyAbortController.abort();
     }
@@ -256,9 +252,6 @@ async function fetchHistory() {
 
     try {
         const response = await fetch(`/api/history?minutes=${currentRangeMinutes}`, {
-            headers: {
-                "ngrok-skip-browser-warning": "true"
-            },
             signal: historyAbortController.signal
         });
 
@@ -449,7 +442,6 @@ async function sendCommand(payload) {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
-                , "ngrok-skip-browser-warning": "true"
             },
             body: JSON.stringify(payload),
         });

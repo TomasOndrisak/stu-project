@@ -79,12 +79,22 @@ def get_latest():
 
 # Get measurements from the last N minutes. Returns a list of dicts.
 def get_history(minutes: int = 1440):
+    if minutes > 360:
+        step = 60
+    elif minutes > 60:
+        step = 10
+    else:
+        step = 1
+
     with get_connection() as conn:
         rows = conn.execute("""
-            SELECT * FROM measurements
-            WHERE timestamp > datetime('now', ?)
+            SELECT * FROM (
+                SELECT *, ROW_NUMBER() OVER (ORDER BY timestamp ASC) as rn
+                FROM measurements
+                WHERE timestamp > datetime('now', ?)
+            ) WHERE rn % ? = 0
             ORDER BY timestamp ASC
-        """, (f"-{minutes} minutes",)).fetchall()
+        """, (f"-{minutes} minutes", step)).fetchall()
         return [_normalize_timestamp(dict(row)) for row in rows]
     
 # SQLite UTC to ISO 8601 with time zone
