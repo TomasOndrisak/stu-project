@@ -34,7 +34,11 @@ const elements = {
 let lastTimestamp = null;
 
 function checkThresholdAlert() {
-    fetch("/api/alert")
+    fetch("/api/alert", {
+        headers: {
+            "ngrok-skip-browser-warning": "true"
+        }
+    })
         .then(r => r.status === 204 ? null : r.json())
         .then(data => { if (data) showAlertToast(data); });
 }
@@ -87,7 +91,11 @@ function refreshRelativeTime() {
 
 async function fetchCurrent() {
     try {
-        const response = await fetch("/api/current");
+        const response = await fetch("/api/current", {
+            headers: {
+                "ngrok-skip-browser-warning": "true"
+            }
+        });
 
         if (!response.ok) {
             elements.status.textContent = "● No data";
@@ -203,7 +211,11 @@ function updateCards(data) {
 
 async function fetchHistory() {
     try {
-        const response = await fetch(`/api/history?minutes=${currentRangeMinutes}`);
+        const response = await fetch(`/api/history?minutes=${currentRangeMinutes}`, {
+            headers: {
+                "ngrok-skip-browser-warning": "true"
+            }
+        });
 
         if (!response.ok) {
             console.warn("History fetch failed:", response.status);
@@ -239,18 +251,18 @@ function updateCharts(measurements) {
         flow: { x: m.timestamp, y: m.flow_rate },
         resistance: { x: m.timestamp, y: m.resistance },
     }));
- 
+
     chartTemperatures.data.datasets[0].data = points.map(p => p.cold);
     chartTemperatures.data.datasets[1].data = points.map(p => p.warm);
     chartTemperatures.data.datasets[2].data = points.map(p => p.setpoint);
     chartTemperatures.update("none");
- 
+
     chartError.data.datasets[0].data = points.map(p => p.error);
     chartError.update("none");
- 
+
     chartFlow.data.datasets[0].data = points.map(p => p.flow);
     chartFlow.update("none");
- 
+
     chartPotentiometer.data.datasets[0].data = points.map(p => p.resistance);
     chartPotentiometer.update("none");
 }
@@ -371,7 +383,9 @@ async function sendCommand(payload) {
     try {
         const response = await fetch("/api/command", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { "Content-Type": "application/json"
+                ,"ngrok-skip-browser-warning": "true"
+             },
             body: JSON.stringify(payload),
         });
 
@@ -519,7 +533,7 @@ const chartFlow = new Chart(
         },
     }
 );
- 
+
 const chartPotentiometer = new Chart(
     document.getElementById("chart-potentiometer"),
     {
