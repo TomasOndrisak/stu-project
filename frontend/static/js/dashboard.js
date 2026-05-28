@@ -1,5 +1,5 @@
 const REFRESH_INTERVAL_MS = 1000;
-const HISTORY_REFRESH_INTERVAL_MS = 15000;
+const HISTORY_REFRESH_INTERVAL_MS = 5000;
 const DEFAULT_RANGE_MINUTES = 60;
 const THRESHOLDS = {
     error: { warn: 0.5, crit: 3.0 },
@@ -191,6 +191,9 @@ function applyThreshold(cardId, className) {
     if (className) card.classList.add(className);
 }
 
+const LIVE_WINDOW = 120;
+let liveMode = false;
+
 function updateCards(data) {
     elements.cold.textContent = data.cold ?? "—";
     elements.warm.textContent = data.warm ?? "—";
@@ -207,6 +210,38 @@ function updateCards(data) {
     elements.totalVolume.textContent = data.total_ml ?? "—";
     applyThreshold("card-error", classifyError(data.error));
     applyThreshold("card-cold", classifyRange(data.cold, THRESHOLDS.cold));
+
+    if (liveMode) appendLivePoint(data);
+}
+
+function appendLivePoint(data) {
+    const ts = data.timestamp;
+
+    chartTemperatures.data.datasets[0].data.push({ x: ts, y: data.cold });
+    chartTemperatures.data.datasets[1].data.push({ x: ts, y: data.warm });
+    chartTemperatures.data.datasets[2].data.push({ x: ts, y: data.setpoint });
+    if (chartTemperatures.data.datasets[0].data.length > LIVE_WINDOW) {
+        chartTemperatures.data.datasets.forEach(d => d.data.shift());
+    }
+    chartTemperatures.update("none");
+
+    chartError.data.datasets[0].data.push({ x: ts, y: data.error });
+    if (chartError.data.datasets[0].data.length > LIVE_WINDOW) {
+        chartError.data.datasets[0].data.shift();
+    }
+    chartError.update("none");
+
+    chartFlow.data.datasets[0].data.push({ x: ts, y: data.flow_rate });
+    if (chartFlow.data.datasets[0].data.length > LIVE_WINDOW) {
+        chartFlow.data.datasets[0].data.shift();
+    }
+    chartFlow.update("none");
+
+    chartPotentiometer.data.datasets[0].data.push({ x: ts, y: data.resistance });
+    if (chartPotentiometer.data.datasets[0].data.length > LIVE_WINDOW) {
+        chartPotentiometer.data.datasets[0].data.shift();
+    }
+    chartPotentiometer.update("none");
 }
 
 let historyAbortController = null;
@@ -296,7 +331,20 @@ function initRangeSelector() {
             b.classList.toggle("active", b === btn);
         });
 
-        fetchHistory();
+        if (minutes === 0) {
+            liveMode = true;
+            clearCharts();
+        } else {
+            liveMode = false;
+            fetchHistory();
+        }
+    });
+}
+
+function clearCharts() {
+    [chartTemperatures, chartError, chartFlow, chartPotentiometer].forEach(chart => {
+        chart.data.datasets.forEach(d => d.data = []);
+        chart.update("none");
     });
 }
 
