@@ -27,7 +27,12 @@ Regulácia teploty je realizovaná pomocou PID algoritmu. Regulačný algoritmus
 
 ![Schéma zapojenia](obrazky/schema.jpg)
 
-*Obr. 1: Schéma zapojenia zariadenia*
+
+*Schéma zapojenia zariadenia*
+
+![Schéma zapojenia](obrazky/SchemaZapojenia.jpg)
+
+*Zapojenie periférií*
 
 Zapojenie systému pozostáva z riadiacej, meracej a výkonovej časti. Riadiacu časť tvorí mikrokontrolér Arduino, ktorý spracováva údaje zo snímačov a generuje PWM signály pre výkonové členy. Meraciu časť tvoria teplotné snímače DS18B20, snímač prietoku a potenciometer. Výkonovú časť tvoria MOSFET moduly, cez ktoré sú ovládané Peltierov modul, čerpadlo a topné teliesko.
 
