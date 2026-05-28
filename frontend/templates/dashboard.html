@@ -73,185 +73,202 @@
                     </div>
                 </div>
             </div>
-        </div>
-
-        <div class="d-flex justify-content-between align-items-baseline mt-4 mb-3 flex-wrap gap-2">
-            <h2 class="h5 mb-0">Actual values</h2>
-            <div class="text-muted small">
-                <span>Last update:</span>
-                <span id="last-update-abs" class="fw-semibold text-dark"></span>
-                <span id="last-update-rel" class="ms-1"></span>
-            </div>
-        </div>
-
-        <div class="row g-3">
-            <div class="col-6 col-md-3">
-                <div class="card text-center threshold-card" id="card-cold">
-                    <div class="card-body">
-                        <h6 class="card-subtitle text-muted">Cold (output)</h6>
-                        <p class="card-text fs-4 mb-0"><span id="val-cold">—</span> °C</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="card text-center">
-                    <div class="card-body">
-                        <h6 class="card-subtitle text-muted">Warm (input)</h6>
-                        <p class="card-text fs-4 mb-0"><span id="val-warm">—</span> °C</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="card text-center">
-                    <div class="card-body">
-                        <h6 class="card-subtitle text-muted">Setpoint</h6>
-                        <p class="card-text fs-4 mb-0"><span id="val-setpoint">—</span> °C</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="card text-center threshold-card" id="card-error">
-                    <div class="card-body">
-                        <h6 class="card-subtitle text-muted">Error</h6>
-                        <p class="card-text fs-4 mb-0"><span id="val-error">—</span> °C</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="row g-3 mt-1">
-            <div class="col-6 col-md-3">
-                <div class="card text-center">
-                    <div class="card-body">
-                        <h6 class="card-subtitle text-muted">Peltier</h6>
-                        <p class="card-text fs-4 mb-0"><span id="val-peltier">—</span></p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="card text-center">
-                    <div class="card-body">
-                        <h6 class="card-subtitle text-muted">Pump</h6>
-                        <p class="card-text fs-4 mb-0"><span id="val-pump">—</span></p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="card text-center">
-                    <div class="card-body">
-                        <h6 class="card-subtitle text-muted">Heater</h6>
-                        <p class="card-text fs-4 mb-0"><span id="val-heater">—</span></p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="card text-center">
-                    <div class="card-body">
-                        <h6 class="card-subtitle text-muted">Resistance</h6>
-                        <p class="card-text fs-4 mb-0"><span id="val-resistance">—</span> Ω</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="card text-center">
-                    <div class="card-body">
-                        <h6 class="card-subtitle text-muted">Flow Rate</h6>
-                        <p class="card-text fs-4 mb-0"><span id="val-flow-rate">—</span> LPM</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="card text-center">
-                    <div class="card-body">
-                        <h6 class="card-subtitle text-muted">Total Volume</h6>
-                        <p class="card-text fs-4 mb-0"><span id="val-total-ml">—</span> mL</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="row g-3 mt-1">
-            <div class="col-12 col-md-4">
-                <div class="card text-center">
-                    <div class="card-body">
-                        <h6 class="card-subtitle text-muted">P term</h6>
-                        <p class="card-text fs-4 mb-0"><span id="val-p-term">—</span></p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-12 col-md-4">
-                <div class="card text-center">
-                    <div class="card-body">
-                        <h6 class="card-subtitle text-muted">I term</h6>
-                        <p class="card-text fs-4 mb-0"><span id="val-i-term">—</span></p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-12 col-md-4">
-                <div class="card text-center">
-                    <div class="card-body">
-                        <h6 class="card-subtitle text-muted">D term</h6>
-                        <p class="card-text fs-4 mb-0"><span id="val-d-term">—</span></p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-
-        <h2 class="h5 mb-3 mt-4">Manual control</h2>
-        <div class="card">
-            <div class="card-body">
-
-                <div class="mb-3">
-                    <label for="ctrl-setpoint" class="form-label">
-                        Setpoint: <span id="ctrl-setpoint-value">22.0</span> °C
-                    </label>
-                    <input type="range" class="form-range" id="ctrl-setpoint" min="16" max="32" step="0.5" value="22">
-                </div>
-
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <label for="ctrl-pump" class="form-label mb-0">
-                            Pump PWM: <span id="ctrl-pump-value">128</span>
-                        </label>
-                        <div class="form-check form-switch mb-0">
-                            <input class="form-check-input" type="checkbox" id="ctrl-pump-pot">
-                            <label class="form-check-label" for="ctrl-pump-pot">Potentiometer</label>
+            <div class="row g-3 mb-4">
+                <div class="col-12 col-lg-6">
+                    <h2 class="h6 mb-2">Flow sensor</h2>
+                    <div class="card">
+                        <div class="card-body" style="height: 250px;">
+                            <canvas id="chart-flow"></canvas>
                         </div>
                     </div>
-                    <input type="range" class="form-range" id="ctrl-pump" min="0" max="255" step="1" value="128">
                 </div>
-
-                <div class="mb-3">
-                    <label for="ctrl-heater" class="form-label">
-                        Heater PWM: <span id="ctrl-heater-value">0</span>
-                    </label>
-                    <input type="range" class="form-range" id="ctrl-heater" min="0" max="255" step="1" value="128">
-                </div>
-
-                <hr>
-                <h6 class="mb-3">PID parameters</h6>
-                <div class="row g-2 mb-3">
-                    <div class="col">
-                        <label for="ctrl-kp" class="form-label">Kp</label>
-                        <input type="number" class="form-control" id="ctrl-kp" value="60" step="0.1">
+                <div class="col-12 col-lg-6">
+                    <h2 class="h6 mb-2">Potentiometer</h2>
+                    <div class="card">
+                        <div class="card-body" style="height: 250px;">
+                            <canvas id="chart-potentiometer"></canvas>
+                        </div>
                     </div>
-                    <div class="col">
-                        <label for="ctrl-ki" class="form-label">Ki</label>
-                        <input type="number" class="form-control" id="ctrl-ki" value="10" step="0.1">
-                    </div>
-                    <div class="col">
-                        <label for="ctrl-kd" class="form-label">Kd</label>
-                        <input type="number" class="form-control" id="ctrl-kd" value="0" step="0.1">
-                    </div>
-                </div>
-
-                <div class="d-flex gap-2">
-                    <button class="btn btn-primary" id="ctrl-pid-apply">Apply PID</button>
-                    <button class="btn btn-outline-secondary" id="ctrl-pid-reset">Reset integral</button>
                 </div>
             </div>
-        </div>
+
+            <div class="d-flex justify-content-between align-items-baseline mt-4 mb-3 flex-wrap gap-2">
+                <h2 class="h5 mb-0">Actual values</h2>
+                <div class="text-muted small">
+                    <span>Last update:</span>
+                    <span id="last-update-abs" class="fw-semibold text-dark"></span>
+                    <span id="last-update-rel" class="ms-1"></span>
+                </div>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-6 col-md-3">
+                    <div class="card text-center threshold-card" id="card-cold">
+                        <div class="card-body">
+                            <h6 class="card-subtitle text-muted">Cold (output)</h6>
+                            <p class="card-text fs-4 mb-0"><span id="val-cold">—</span> °C</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h6 class="card-subtitle text-muted">Warm (input)</h6>
+                            <p class="card-text fs-4 mb-0"><span id="val-warm">—</span> °C</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h6 class="card-subtitle text-muted">Setpoint</h6>
+                            <p class="card-text fs-4 mb-0"><span id="val-setpoint">—</span> °C</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="card text-center threshold-card" id="card-error">
+                        <div class="card-body">
+                            <h6 class="card-subtitle text-muted">Error</h6>
+                            <p class="card-text fs-4 mb-0"><span id="val-error">—</span> °C</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-3 mt-1">
+                <div class="col-6 col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h6 class="card-subtitle text-muted">Peltier</h6>
+                            <p class="card-text fs-4 mb-0"><span id="val-peltier">—</span></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h6 class="card-subtitle text-muted">Pump</h6>
+                            <p class="card-text fs-4 mb-0"><span id="val-pump">—</span></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h6 class="card-subtitle text-muted">Heater</h6>
+                            <p class="card-text fs-4 mb-0"><span id="val-heater">—</span></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h6 class="card-subtitle text-muted">Resistance</h6>
+                            <p class="card-text fs-4 mb-0"><span id="val-resistance">—</span> Ω</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h6 class="card-subtitle text-muted">Flow Rate</h6>
+                            <p class="card-text fs-4 mb-0"><span id="val-flow-rate">—</span> LPM</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h6 class="card-subtitle text-muted">Total Volume</h6>
+                            <p class="card-text fs-4 mb-0"><span id="val-total-ml">—</span> mL</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-3 mt-1">
+                <div class="col-12 col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h6 class="card-subtitle text-muted">P term</h6>
+                            <p class="card-text fs-4 mb-0"><span id="val-p-term">—</span></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h6 class="card-subtitle text-muted">I term</h6>
+                            <p class="card-text fs-4 mb-0"><span id="val-i-term">—</span></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h6 class="card-subtitle text-muted">D term</h6>
+                            <p class="card-text fs-4 mb-0"><span id="val-d-term">—</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <h2 class="h5 mb-3 mt-4">Manual control</h2>
+            <div class="card">
+                <div class="card-body">
+
+                    <div class="mb-3">
+                        <label for="ctrl-setpoint" class="form-label">
+                            Setpoint: <span id="ctrl-setpoint-value">22.0</span> °C
+                        </label>
+                        <input type="range" class="form-range" id="ctrl-setpoint" min="16" max="32" step="0.5" value="22">
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label for="ctrl-pump" class="form-label mb-0">
+                                Pump PWM: <span id="ctrl-pump-value">128</span>
+                            </label>
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox" id="ctrl-pump-pot">
+                                <label class="form-check-label" for="ctrl-pump-pot">Potentiometer</label>
+                            </div>
+                        </div>
+                        <input type="range" class="form-range" id="ctrl-pump" min="0" max="255" step="1" value="128">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="ctrl-heater" class="form-label">
+                            Heater PWM: <span id="ctrl-heater-value">0</span>
+                        </label>
+                        <input type="range" class="form-range" id="ctrl-heater" min="0" max="255" step="1" value="128">
+                    </div>
+
+                    <hr>
+                    <h6 class="mb-3">PID parameters</h6>
+                    <div class="row g-2 mb-3">
+                        <div class="col">
+                            <label for="ctrl-kp" class="form-label">Kp</label>
+                            <input type="number" class="form-control" id="ctrl-kp" value="60" step="0.1">
+                        </div>
+                        <div class="col">
+                            <label for="ctrl-ki" class="form-label">Ki</label>
+                            <input type="number" class="form-control" id="ctrl-ki" value="10" step="0.1">
+                        </div>
+                        <div class="col">
+                            <label for="ctrl-kd" class="form-label">Kd</label>
+                            <input type="number" class="form-control" id="ctrl-kd" value="0" step="0.1">
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-primary" id="ctrl-pid-apply">Apply PID</button>
+                        <button class="btn btn-outline-secondary" id="ctrl-pid-reset">Reset integral</button>
+                    </div>
+                </div>
+            </div>
     </main>
     <div class="toast-container position-fixed top-0 end-0 p-4" style="margin-top: 40px;">
         <div id="alertToast" class="toast text-bg-danger" role="alert">

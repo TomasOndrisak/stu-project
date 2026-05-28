@@ -9,6 +9,9 @@ const THRESHOLDS = {
 // Currently selected history range in minutes.
 let currentRangeMinutes = DEFAULT_RANGE_MINUTES;
 
+let lastManualControl = 0;
+const SYNC_SUPPRESS_MS = 4000;
+
 const elements = {
     status: document.getElementById("status"),
     cold: document.getElementById("val-cold"),
@@ -94,6 +97,7 @@ async function fetchCurrent() {
 
         const data = await response.json();
         updateCards(data);
+        syncControls(data);
         elements.status.textContent = "● Server Connected";
 
         updateLastUpdate(data.timestamp);
@@ -106,6 +110,28 @@ async function fetchCurrent() {
         elements.status.textContent = "● Error fetching data";
         updateArduinoStatus(null);
         updateLastUpdate(null);
+    }
+}
+
+function syncControls(data) {
+    if (Date.now() - lastManualControl < SYNC_SUPPRESS_MS) return;
+
+    if (data.setpoint != null) {
+        ctrlSetpoint.value = data.setpoint;
+        ctrlSetpointValue.textContent = parseFloat(data.setpoint).toFixed(1);
+    }
+
+    if (data.pump_pwm != null) {
+        ctrlPump.value = data.pump_pwm;
+        ctrlPumpValue.textContent = `${Math.round(data.pump_pwm / 2.55)} % (${data.pump_pwm} PWM)`;
+    }
+    const potMode = !!data.pump_from_pot;
+    ctrlPumpPot.checked = potMode;
+    ctrlPump.disabled = potMode;
+
+    if (data.heater_pwm != null) {
+        ctrlHeater.value = data.heater_pwm;
+        ctrlHeaterValue.textContent = `${Math.round(data.heater_pwm / 2.55)} % (${data.heater_pwm} PWM)`;
     }
 }
 
@@ -210,15 +236,23 @@ function updateCharts(measurements) {
         warm: { x: m.timestamp, y: m.warm },
         setpoint: { x: m.timestamp, y: m.setpoint },
         error: { x: m.timestamp, y: m.error },
+        flow: { x: m.timestamp, y: m.flow_rate },
+        resistance: { x: m.timestamp, y: m.resistance },
     }));
-
+ 
     chartTemperatures.data.datasets[0].data = points.map(p => p.cold);
     chartTemperatures.data.datasets[1].data = points.map(p => p.warm);
     chartTemperatures.data.datasets[2].data = points.map(p => p.setpoint);
     chartTemperatures.update("none");
-
+ 
     chartError.data.datasets[0].data = points.map(p => p.error);
     chartError.update("none");
+ 
+    chartFlow.data.datasets[0].data = points.map(p => p.flow);
+    chartFlow.update("none");
+ 
+    chartPotentiometer.data.datasets[0].data = points.map(p => p.resistance);
+    chartPotentiometer.update("none");
 }
 
 function initRangeSelector() {
@@ -256,6 +290,7 @@ ctrlSetpoint.addEventListener("change", async () => {
 
 // Setpoint input event
 ctrlSetpoint.addEventListener("input", () => {
+    lastManualControl = Date.now();
     ctrlSetpointValue.textContent = parseFloat(ctrlSetpoint.value).toFixed(1);
 });
 
@@ -266,6 +301,7 @@ const ctrlPumpPot = document.getElementById("ctrl-pump-pot");
 
 // Pump input event - updates displayed value
 ctrlPump.addEventListener("input", () => {
+    lastManualControl = Date.now();
     ctrlPumpValue.textContent = `${Math.round(ctrlPump.value / 2.55)} % (${ctrlPump.value} PWM)`;
 });
 
@@ -283,6 +319,7 @@ const ctrlHeater = document.getElementById("ctrl-heater");
 const ctrlHeaterValue = document.getElementById("ctrl-heater-value");
 
 ctrlHeater.addEventListener("input", () => {
+    lastManualControl = Date.now();
     ctrlHeaterValue.textContent = `${Math.round(ctrlHeater.value / 2.55)} % (${ctrlHeater.value} PWM)`;
 });
 
@@ -295,6 +332,7 @@ ctrlHeater.addEventListener("change", async () => {
 
 // On change event - sends command to backend
 ctrlPumpPot.addEventListener("change", async () => {
+    lastManualControl = Date.now();
     if (ctrlPumpPot.checked) {
         // Activate potentiometer mode — disable manual slider and send -1 to indicate auto mode
         ctrlPump.disabled = true;
@@ -449,6 +487,71 @@ const chartError = new Chart(
     }
 );
 
+const chartFlow = new Chart(
+    document.getElementById("chart-flow"),
+    {
+        type: "line",
+        data: {
+            datasets: [
+                {
+                    label: "Flow rate",
+                    borderColor: "#0dcaf0",
+                    backgroundColor: "rgba(13, 202, 240, 0.1)",
+                    data: [],
+                    tension: 0.3,
+                    fill: true,
+                },
+            ],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    type: "time",
+                    time: { unit: timeUnitForRange(DEFAULT_RANGE_MINUTES) },
+                },
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: "LPM" },
+                },
+            },
+        },
+    }
+);
+ 
+const chartPotentiometer = new Chart(
+    document.getElementById("chart-potentiometer"),
+    {
+        type: "line",
+        data: {
+            datasets: [
+                {
+                    label: "Potentiometer",
+                    borderColor: "#ff0707",
+                    backgroundColor: "rgba(255, 193, 7, 0.1)",
+                    data: [],
+                    tension: 0.3,
+                    fill: true,
+                },
+            ],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    type: "time",
+                    time: { unit: timeUnitForRange(DEFAULT_RANGE_MINUTES) },
+                },
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: "Ω" },
+                },
+            },
+        },
+    }
+);
 
 initRangeSelector();
 
