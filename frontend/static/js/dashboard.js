@@ -383,9 +383,10 @@ async function sendCommand(payload) {
     try {
         const response = await fetch("/api/command", {
             method: "POST",
-            headers: { "Content-Type": "application/json"
-                ,"ngrok-skip-browser-warning": "true"
-             },
+            headers: {
+                "Content-Type": "application/json"
+                , "ngrok-skip-browser-warning": "true"
+            },
             body: JSON.stringify(payload),
         });
 
