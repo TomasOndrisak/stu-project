@@ -34,7 +34,7 @@ PID regulátor bežiaci na Arduine udržuje teplotu „studenej" vody na nastave
 ![Architektúra systému](docs/obrazky/SW_Architecture.png)
 
 
-> Schéma zapojenia senzorov: [`docs/obrazky/schema.png`](docs/obrazky/schema.png)
+> Schéma zapojenia senzorov: [`docs/obrazky/schema.png`](docs/obrazky/schema.jpg)
 
 ---
 
