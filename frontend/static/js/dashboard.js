@@ -287,6 +287,8 @@ function applyChartTimeUnit(minutes) {
     const unit = timeUnitForRange(minutes);
     chartTemperatures.options.scales.x.time.unit = unit;
     chartError.options.scales.x.time.unit = unit;
+    chartFlow.options.scales.x.time.unit = unit;
+    chartPotentiometer.options.scales.x.time.unit = unit;
 }
 
 function updateCharts(measurements) {
@@ -333,6 +335,9 @@ function initRangeSelector() {
 
         if (minutes === 0) {
             liveMode = true;
+            [chartTemperatures, chartError, chartFlow, chartPotentiometer].forEach(chart => {
+                chart.options.scales.x.time.unit = "second";
+            });
             clearCharts();
         } else {
             liveMode = false;
