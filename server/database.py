@@ -11,8 +11,9 @@ DB_PATH = Path(os.getenv("DB_PATH", Path(__file__).parent / "data.db"))
 
 @contextmanager
 def get_connection():
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=10)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode=WAL")
     try:
         yield conn
         conn.commit()
