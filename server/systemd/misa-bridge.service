@@ -1,0 +1,13 @@
+[Unit]
+Description=MISA Serial-MQTT Bridge
+After=network.target mosquitto.service
+
+[Service]
+User=pi
+WorkingDirectory=/home/pi/misa/server
+ExecStart=/usr/bin/python3 bridge.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
