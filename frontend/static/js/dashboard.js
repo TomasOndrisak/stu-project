@@ -1,5 +1,5 @@
 const REFRESH_INTERVAL_MS = 1000;
-const HISTORY_REFRESH_INTERVAL_MS = 1000;
+const HISTORY_REFRESH_INTERVAL_MS = 15000;
 const DEFAULT_RANGE_MINUTES = 60;
 const THRESHOLDS = {
     error: { warn: 0.5, crit: 3.0 },
@@ -209,12 +209,22 @@ function updateCards(data) {
     applyThreshold("card-cold", classifyRange(data.cold, THRESHOLDS.cold));
 }
 
+let historyAbortController = null;
+
 async function fetchHistory() {
+
+    if (historyAbortController) {
+        historyAbortController.abort();
+    }
+
+    historyAbortController = new AbortController();
+
     try {
         const response = await fetch(`/api/history?minutes=${currentRangeMinutes}`, {
             headers: {
                 "ngrok-skip-browser-warning": "true"
-            }
+            },
+            signal: historyAbortController.signal
         });
 
         if (!response.ok) {
@@ -223,9 +233,11 @@ async function fetchHistory() {
         }
 
         const data = await response.json();
+        applyChartTimeUnit(currentRangeMinutes);
         updateCharts(data);
 
     } catch (error) {
+        if (error.name === 'AbortError') return;
         console.error("History fetch error:", error);
     }
 }
@@ -284,7 +296,6 @@ function initRangeSelector() {
             b.classList.toggle("active", b === btn);
         });
 
-        applyChartTimeUnit(minutes);
         fetchHistory();
     });
 }
