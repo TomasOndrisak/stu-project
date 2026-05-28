@@ -164,7 +164,7 @@ Publikovaný automaticky ak `|error| > ALERT_ERROR_THRESHOLD` (predvolene 5,0 °
 
 ### Požiadavky
 
-- Raspberry Pi OS Lite (64-bit), Python 3.11+
+- Raspberry Pi OS Lite (32/64-bit), Python 3.11+
 - Mosquitto MQTT broker
 - Arduino IDE 2.x (na nahratie firmvéru)
 
@@ -262,12 +262,16 @@ journalctl -u misa-server -f   # live logy server
 
 ## Prístup na dashboard
 
+Lokálne:
+
 | Služba | URL |
 |---|---|
 | Webový dashboard | `http://localhost:5000` |
 | API — aktuálne dáta | `http://localhost:5000/api/current` |
 | API — história (posledných x minút) | `http://localhost:5000/api/history?minutes=60` |
 
+Pre prístup na webové rozhranie z internetu [`tunnel_url.txt`](tunnel_url.txt).
+Link v súbore sa aktualizuje automaticky, po reštarte raspberry pi.
 
 ---
 
