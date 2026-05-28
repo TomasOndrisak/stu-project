@@ -25,7 +25,7 @@ V systéme sa meria teplota vody, prietok vody a hodnota z potenciometra. Potenc
 Regulácia teploty je realizovaná pomocou PID algoritmu. Regulačný algoritmus porovnáva požadovanú teplotu so skutočne nameranou teplotou vody a podľa vzniknutej regulačnej odchýlky nastavuje výkon Peltierovho modulu. Systém teda teplotu aktívne znižuje chladením, pričom topné teliesko slúži hlavne na vytvorenie záťaže alebo poruchy v systéme.
 
 
-![alt text](/obrazky/shcema.jpg)
+![Schéma zapojenia](/obrazky/shcema.jpg)
 *Obr. 1: Schéma zapojenia zariadenia*
 
 Zapojenie systému pozostáva z riadiacej, meracej a výkonovej časti. Riadiacu časť tvorí mikrokontrolér Arduino, ktorý spracováva údaje zo snímačov a generuje PWM signály pre výkonové členy. Meraciu časť tvoria teplotné snímače DS18B20, snímač prietoku a potenciometer. Výkonovú časť tvoria MOSFET moduly, cez ktoré sú ovládané Peltierov modul, čerpadlo a topné teliesko.
