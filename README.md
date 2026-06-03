@@ -1,6 +1,6 @@
-# MISA — Meranie fyzikálnej veličiny s vizualizáciou
+# Meranie fyzikálnej veličiny s vizualizáciou
 
-Semestrálny projekt predmetu MISA. Systém meria teplotu chladiacej kvapaliny, reguluje Peltierov článok pomocou PID regulátora a vizualizuje namerané dáta v reálnom čase cez webové rozhranie.
+Systém meria teplotu chladiacej kvapaliny, reguluje Peltierov článok pomocou PID regulátora a vizualizuje namerané dáta v reálnom čase cez webové rozhranie.
 
 > Hardvérová dokumentácia (schémy zapojenia, popis komponentov, montáž) je v [`docs/hardware.md`](docs/hardware.md).
 
@@ -256,6 +256,15 @@ sudo systemctl status misa-bridge
 sudo systemctl status misa-server
 journalctl -u misa-bridge -f   # live logy bridge
 journalctl -u misa-server -f   # live logy server
+```
+
+---
+
+#### 2.6 Lokálne testovanie bez hardware
+
+```bash
+cd /home/pi/stu-project/server
+python3 mock_run.py
 ```
 
 ---

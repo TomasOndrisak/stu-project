@@ -145,7 +145,7 @@ def check_and_publish_alert(parsed: dict) -> None:
 def main():
     global ser
 
-    log.info("Starting MISA serial bridge...")
+    log.info("Starting serial bridge...")
     log.info("Connecting to MQTT broker %s:%s", MQTT_HOST, MQTT_PORT)
     connect_mqtt()
     mqtt_client.loop_start()
