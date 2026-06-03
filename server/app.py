@@ -8,6 +8,8 @@ from pathlib import Path
 import paho.mqtt.client as mqtt
 from dotenv import load_dotenv
 from flask import Flask, jsonify, render_template, request
+from database import get_history_by_range 
+
 
 import database
 
@@ -243,6 +245,27 @@ def api_system_close():
     system["session_started_at"] = None
     log.info("System CLOSE -> off (safe state)")
     return jsonify(system)
+
+# History tab
+@app.route('/history')
+def history_page():
+    return render_template('history.html')
+
+# Api endpoint to get historical data for a custom date range
+@app.route('/api/history/range', methods=['GET'])
+def get_history_range():
+    start = request.args.get('start')  
+    end = request.args.get('end')      
+    
+    if not start or not end:
+        return jsonify({"error": "Parameter 'start' or 'end' is missing"}), 400
+    
+    try:
+        data = get_history_by_range(start, end)
+        return jsonify(data)
+        
+    except Exception as e:
+        return jsonify({"error": f"Error reading from database: {str(e)}"}), 500
 
 
 # App startup

@@ -97,6 +97,24 @@ def get_history(minutes: int = 1440):
         """, (f"-{minutes} minutes", step)).fetchall()
         return [_normalize_timestamp(dict(row)) for row in rows]
     
+def get_history_by_range(start_iso: str, end_iso: str):
+    try:
+        start_dt = datetime.fromisoformat(start_iso)
+        end_dt = datetime.fromisoformat(end_iso)
+        start_db = start_dt.strftime("%Y-%m-%d %H:%M:%S")
+        end_db = end_dt.strftime("%Y-%m-%d %H:%M:%S")
+    except ValueError:
+        start_db = start_iso.replace('T', ' ')
+        end_db = end_iso.replace('T', ' ')
+
+    with get_connection() as conn:
+        rows = conn.execute("""
+            SELECT * FROM measurements 
+            WHERE timestamp BETWEEN ? AND ? 
+            ORDER BY timestamp ASC
+        """, (start_db, end_db)).fetchall()
+        return [_normalize_timestamp(dict(row)) for row in rows]
+    
 # SQLite UTC to ISO 8601 with time zone
 def _normalize_timestamp(row_dict):
     ts = row_dict.get("timestamp")
