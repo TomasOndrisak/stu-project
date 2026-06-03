@@ -267,6 +267,9 @@ def get_history_range():
     except Exception as e:
         return jsonify({"error": f"Error reading from database: {str(e)}"}), 500
 
+@app.route('/gauges')
+def gauges_page():
+    return render_template('gauges.html')
 
 # App startup
 def main():
