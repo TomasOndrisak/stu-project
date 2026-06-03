@@ -1,6 +1,6 @@
 # Meranie fyzikálnej veličiny s vizualizáciou
 
-Systém meria teplotu chladiacej kvapaliny, reguluje Peltierov článok pomocou PID regulátora a vizualizuje namerané dáta v reálnom čase cez webové rozhranie.
+Systém meria teplotu chladiacej kvapaliny, reguluje Peltierov článok pomocou PID regulátora a vizualizuje namerané dáta v reálnom čase aj spätne cez troj-panelové webové rozhranie.
 
 > Hardvérová dokumentácia (schémy zapojenia, popis komponentov, montáž) je v [`docs/hardware.md`](docs/hardware.md).
 
@@ -25,14 +25,18 @@ Systém simuluje chladenie priemyselného stroja pomocou uzavretého vodného ok
 
 Dve teplotné čidlá DS18B20 merajú teplotu kvapaliny **pred** a **za** výmenníkom — ich rozdiel vyjadruje okamžitý tepelný výkon systému. Potenciometer slúži na manuálne ovládanie čerpadla alebo ako demonštrácia analógového snímača kategórie B.
 
-PID regulátor bežiaci na Arduine udržuje teplotu „studenej" vody na nastavenej hodnote riadením PWM výkonu Peltierovho článku. Telemetria je každú sekundu odosielaná cez sériovú linku na Raspberry Pi, kde ju `bridge.py` publikuje cez MQTT. Flask server (`app.py`) správy odberie, uloží do SQLite databázy a sprístupní cez webový dashboard.
+PID regulátor bežiaci na Arduine udržuje teplotu „studenej" vody na nastavenej hodnote riadením PWM výkonu Peltierovho článku. Telemetria je každú sekundu odosielaná cez sériovú linku na Raspberry Pi, kde ju `bridge.py` publikuje cez MQTT. Flask server (`app.py`) správy odberie, uloží do SQLite databázy a sprístupní ich pre klientsku aplikáciu.
+
+Webové rozhranie je rozdelené do troch logických častí pre splnenie všetkých konceptov IoT vizualizácie:
+- **Dashboard:** Zobrazuje real-time líniové grafy a manuálne ovládacie prvky.
+- **Gauges:** Zobrazuje okamžité veličiny na analógových ručičkových ukazovateľoch (teploty, prietok, výkon).
+- **History:** Umožňuje dopytovať SQLite databázu na vlastný časový rozsah, exportovať dáta (JSON/CSV) a importovať lokálne archívy pre offline vizualizáciu.
 
 ---
 
 ## Architektúra
 
 ![Architektúra systému](docs/obrazky/SW_Architecture.png)
-
 
 > Schéma zapojenia senzorov: [`docs/obrazky/schema.jpg`](docs/obrazky/schema.jpg)
 
@@ -77,11 +81,15 @@ Broker (Mosquitto) beží lokálne na Raspberry Pi a počúva iba na `127.0.0.1:
 
 ### Databáza — SQLite
 
-Ľahká bezseverová databáza bez závislostí vhodná pre objem dát projektu (≈ 86 400 záznamov/deň). Schéma je inicializovaná automaticky pri štarte `app.py`. História je dostupná cez `/api/history?minutes=N`.
+Ľahká bezserverová databáza bez závislostí vhodná pre objem dát projektu (≈ 86 400 záznamov/deň). Schéma je inicializovaná automaticky pri štarte `app.py`. História je dostupná cez `/api/history?minutes=N` a pre vlastný časový rozsah cez `/api/history/range`.
 
-### Vizualizácia — vlastný Flask dashboard
+### Vizualizácia — viacpanelový Flask dashboard
 
-Vlastný webový dashboard (Flask + Vanilla JS + Chart.js) bol zvolený pre plnú kontrolu nad zobrazením. Dashboard sa aktualizuje každú sekundu (`/api/current`), história grafov každých 15 sekúnd (`/api/history`). Príkazy na Arduino (setpoint, PID parametre, PWM) sa odosielajú cez `POST /api/command`.
+Vlastné webové rozhranie (Flask + Vanilla JS + Chart.js + Canvas-Gauges) bolo navrhnuté pre maximálny prehľad nad systémom a splnenie všetkých vizualizačných bodov zadania. Rozhranie je rozdelené na 3 samostatné pohľady:
+
+1. **Dashboard (`/`):** Zobrazuje real-time líniové grafy (teploty, odchýlka, prietok, potenciometer) aktualizované každú sekundu pomocou `/api/current`. Obsahuje manuálne ovládacie prvky pre setpoint, PID parametre a výkon čerpadla či výhrevu.
+2. **Gauges (`/gauges`):** Zobrazuje okamžité fyzikálne veličiny na kruhových analógových ukazovateľoch.
+3. **History (`/history`):** Umožňuje používateľovi vybrať presný dátum a čas (Od - Do) a dopytovať SQLite databázu. Dáta vykreslí do interaktívneho líniového grafu a tabuľkového výpisu. Zároveň obsahuje plne klientsku implementáciu pre **export dát** (stiahnutie do formátov `.json` a `.csv`) a **import dát** (nahratie predtým stiahnutého JSON súboru pre offline vizualizáciu bez nutnosti pripojenia k databáze).
 
 ### Perióda merania — 1 sekunda
 
@@ -158,6 +166,38 @@ Publikovaný automaticky ak `|error| > ALERT_ERROR_THRESHOLD` (predvolene 5,0 °
 | `{"Kd": 0.0}` | float | Derivačné zosilnenie |
 | `{"reset": 1}` | — | Resetuje PID integrál a predchádzajúcu chybu |
 
+### Vlastný dopyt histórie — `GET /api/history/range`
+
+Vráti pole historických hodnôt v presne zadefinovanom časovom intervale, zoradené chronologicky.
+
+**Parametre dopytu (Query Parameters):**
+- `start` (string, required): Počiatočný čas vo formáte `YYYY-MM-DDTHH:MM`
+- `end` (string, required): Koncový čas vo formáte `YYYY-MM-DDTHH:MM`
+
+**Formát odpovede (Odpoveď je pole JSON objektov):**
+```json
+[
+  {
+    "id": 1245,
+    "timestamp": "2026-06-03T12:00:00+00:00",
+    "cold": 19.3,
+    "warm": 31.5,
+    "setpoint": 22.0,
+    "error": 2.7,
+    "p_term": -150.0,
+    "i_term": -10.0,
+    "d_term": 0.0,
+    "peltier_pwm": 128,
+    "pump_pwm": 128,
+    "heater_pwm": 0,
+    "resistance": 512,
+    "pump_from_pot": 0,
+    "flow_rate": 1.0,
+    "total_ml": 5400.0
+  }
+]
+```
+
 ---
 
 ## Inštalácia
@@ -174,8 +214,8 @@ Publikovaný automaticky ak `|error| > ALERT_ERROR_THRESHOLD` (predvolene 5,0 °
 
 ```bash
 # Firmware pre arduino sa nachádza firmware/main/main.ino a je nutné ho nahrať pomocou Arduino IDE
-
 ```
+
 #### 1.1 Systémové závislosti
 - `OneWire` — Paul Stoffregen
 - `DallasTemperature` — Miles Burton
@@ -273,11 +313,14 @@ python3 mock_run.py
 
 Lokálne:
 
-| Služba | URL |
-|---|---|
-| Webový dashboard | `http://localhost:5000` |
-| API — aktuálne dáta | `http://localhost:5000/api/current` |
-| API — história (posledných x minút) | `http://localhost:5000/api/history?minutes=60` |
+| Služba | URL | Popis |
+|---|---|---|
+| Webový dashboard (Live) | `http://localhost:5000` | Reálny čas, interaktívne grafy a ovládanie |
+| Analógové cíferníky | `http://localhost:5000/gauges` | Real-time zobrazenie ručičkových ukazovateľov |
+| Filter histórie a exporty | `http://localhost:5000/history` | Dopytovanie DB podľa dátumu, import a export dát |
+| API — aktuálne dáta | `http://localhost:5000/api/current` | Okamžitý stav systému (JSON) |
+| API — história (posledných x minút) | `http://localhost:5000/api/history?minutes=60` | Dáta za posledné minúty |
+| API — história (rozsah) | `http://localhost:5000/api/history/range?start=...&end=...` | Dáta v presne definovanom časovom intervale |
 
 Pre prístup na webové rozhranie z internetu [`tunnel_url.txt`](tunnel_url.txt).
 Link v súbore sa aktualizuje automaticky, po reštarte raspberry pi.
