@@ -458,6 +458,62 @@ async function sendCommand(payload) {
     }
 }
 
+const SYSTEM_BADGE = {
+    off:     { text: "● System OFF",     cls: "bg-secondary" },
+    ready:   { text: "● System READY",   cls: "bg-info text-dark" },
+    running: { text: "● System RUNNING", cls: "bg-success" },
+};
+
+const btnOpen = document.getElementById("btn-open");
+const btnStart = document.getElementById("btn-start");
+const btnStop = document.getElementById("btn-stop");
+const btnClose = document.getElementById("btn-close");
+const systemStateBadge = document.getElementById("system-state");
+const systemStateText = document.getElementById("system-state-text");
+
+let systemState = "off";
+
+function applySystemState(state) {
+    systemState = state;
+
+    const badge = SYSTEM_BADGE[state] || SYSTEM_BADGE.off;
+    systemStateBadge.className = `badge fs-6 fw-normal ${badge.cls}`;
+    systemStateBadge.textContent = badge.text;
+    systemStateText.textContent = state.toUpperCase();
+
+    btnOpen.disabled = state !== "off";
+    btnStart.disabled = state !== "ready";
+    btnStop.disabled = state !== "running";
+    btnClose.disabled = state === "off";
+}
+
+async function fetchSystemState() {
+    try {
+        const response = await fetch("/api/system/state");
+        if (!response.ok) return;
+        const data = await response.json();
+        if (data.state) applySystemState(data.state);
+    } catch (error) {
+        console.error("System state error:", error);
+    }
+}
+
+async function systemAction(action) {
+    try {
+        const response = await fetch(`/api/system/${action}`, { method: "POST" });
+        const data = await response.json();
+        if (data.state) applySystemState(data.state);
+        if (!response.ok) console.warn(`System ${action}:`, data.error);
+    } catch (error) {
+        console.error(`System ${action} error:`, error);
+    }
+}
+
+btnOpen.addEventListener("click", () => systemAction("open"));
+btnStart.addEventListener("click", () => systemAction("start"));
+btnStop.addEventListener("click", () => systemAction("stop"));
+btnClose.addEventListener("click", () => systemAction("close"));
+
 
 const chartTemperatures = new Chart(
     document.getElementById("chart-temperatures"),
@@ -625,6 +681,9 @@ const chartPotentiometer = new Chart(
 );
 
 initRangeSelector();
+
+fetchSystemState();
+setInterval(fetchSystemState, 3000);
 
 fetchCurrent();
 

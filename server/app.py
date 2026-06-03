@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 import paho.mqtt.client as mqtt
@@ -46,6 +47,47 @@ app = Flask(
 # MQTT instnace
 mqtt_client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 
+# ---------------------------------------------------------------------------
+#   off -> system is deactivated nothing is beign sent
+#   Open: Connected but still not writing data to database
+#   Start: Data is being written to database, system is active 
+# ---------------------------------------------------------------------------
+SYSTEM_OFF     = "off"
+SYSTEM_READY   = "ready"
+SYSTEM_RUNNING = "running"
+
+system = {
+    "state": SYSTEM_OFF,
+    "session_started_at": None,
+}
+
+latest_telemetry: dict | None = None
+
+# Telemetry mapping
+def _normalize_telemetry(data: dict) -> dict:
+    return {
+        "cold":          data.get("cold"),
+        "warm":          data.get("warm"),
+        "setpoint":      data.get("setpoint"),
+        "error":         data.get("error"),
+        "p_term":        data.get("P_term"),
+        "i_term":        data.get("I_term"),
+        "d_term":        data.get("D_term"),
+        "peltier_pwm":   data.get("peltier_pwm"),
+        "pump_pwm":      data.get("pump_pwm"),
+        "heater_pwm":    data.get("heater_pwm"),
+        "resistance":    data.get("resistance"),
+        "pump_from_pot": bool(data.get("pump_from_pot")),
+        "flow_rate":     data.get("flow_rate_lpm"),
+        "total_ml":      data.get("total_ml"),
+        "timestamp":     datetime.now(timezone.utc).isoformat(),
+    }
+
+
+def _publish_command(payload: dict) -> None:
+    mqtt_client.publish(TOPIC_COMMAND, json.dumps(payload))
+    log.info("Command sent: %s", payload)
+
 # MQTT callback after connecting to the broker. Subscribes to mqtt topics.
 def on_connect(client, userdata, flags, rc, properties=None):
     if rc == 0:
@@ -62,7 +104,7 @@ def on_connect(client, userdata, flags, rc, properties=None):
 
 # MQTT callback after receiving a message. Parses JSON and saves to DB.
 def on_message(client, userdata, msg):
-    global latest_alert
+    global latest_alert, latest_telemetry
     try:
         data = json.loads(msg.payload.decode())
 
@@ -71,9 +113,15 @@ def on_message(client, userdata, msg):
             log.warning("Alert received at: %s", data)
             return
 
-        database.insert_measurement(data)
-        log.info("Saved: cold=%s warm=%s peltier_pwm=%s",
-                 data.get("cold"), data.get("warm"), data.get("peltier_pwm"))
+        if system["state"] == SYSTEM_OFF:
+            return
+
+        latest_telemetry = _normalize_telemetry(data)
+
+        if system["state"] == SYSTEM_RUNNING:
+            database.insert_measurement(data)
+            log.info("Saved: cold=%s warm=%s peltier_pwm=%s",
+                     data.get("cold"), data.get("warm"), data.get("peltier_pwm"))
     except json.JSONDecodeError:
         log.warning("Invalid JSON: %s", msg.payload)
     except Exception as e:
@@ -94,6 +142,13 @@ def dashboard():
 # API endpoint to get the latest measurement as JSON.
 @app.route("/api/current")
 def api_current():
+    # System deactivated
+    if system["state"] == SYSTEM_OFF:
+        return jsonify({"error": "system off", "state": SYSTEM_OFF}), 409
+    # Live values from memory (even in 'ready' state, without writing to DB).
+    if latest_telemetry:
+        return jsonify(latest_telemetry)
+    # Fallback after startup, until the first telemetry arrives.
     data = database.get_latest()
     if not data:
         return jsonify({"error": "no data"}), 404
@@ -114,6 +169,9 @@ def api_history():
 # allowed keys: pumpPWM, heaterPWM, setpoint, Kp, Ki, Kd, reset.
 @app.route("/api/command", methods=["POST"])
 def api_command():
+    if system["state"] == SYSTEM_OFF:
+        return jsonify({"error": "system is closed, press Open first"}), 409
+
     payload = request.get_json()
 
     allowed = {"pumpPWM", "heaterPWM", "setpoint", "Kp", "Ki", "Kd", "reset"}
@@ -133,6 +191,58 @@ def api_alert():
     alert = latest_alert
     latest_alert = None
     return jsonify(alert)
+
+
+# Actual system state
+@app.route("/api/system/state")
+def api_system_state():
+    return jsonify(system)
+
+
+# Open state
+@app.route("/api/system/open", methods=["POST"])
+def api_system_open():
+    if system["state"] != SYSTEM_OFF:
+        return jsonify({"error": "already open", **system}), 409
+    _publish_command({"activate": 1})
+    system["state"] = SYSTEM_READY
+    log.info("System OPEN -> ready")
+    return jsonify(system)
+
+
+# Ready
+@app.route("/api/system/start", methods=["POST"])
+def api_system_start():
+    if system["state"] != SYSTEM_READY:
+        return jsonify({"error": "not ready (press Open first)", **system}), 409
+    system["state"] = SYSTEM_RUNNING
+    system["session_started_at"] = datetime.now(timezone.utc).isoformat()
+    log.info("System START -> running")
+    return jsonify(system)
+
+
+# Stop
+@app.route("/api/system/stop", methods=["POST"])
+def api_system_stop():
+    if system["state"] != SYSTEM_RUNNING:
+        return jsonify({"error": "not running", **system}), 409
+    system["state"] = SYSTEM_READY
+    system["session_started_at"] = None
+    log.info("System STOP -> ready")
+    return jsonify(system)
+
+
+# Close
+@app.route("/api/system/close", methods=["POST"])
+def api_system_close():
+    _publish_command({"pumpPWM": 0})
+    _publish_command({"heaterPWM": 0})
+    _publish_command({"reset": 1})
+    _publish_command({"activate": 0})
+    system["state"] = SYSTEM_OFF
+    system["session_started_at"] = None
+    log.info("System CLOSE -> off (safe state)")
+    return jsonify(system)
 
 
 # App startup
